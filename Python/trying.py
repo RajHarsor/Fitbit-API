@@ -102,10 +102,14 @@ if __name__ == "__main__":
     from datetime import datetime, timedelta
     today = datetime.now().strftime('%Y-%m-%d')
     week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-    
+
+    #TODO: Add a input for the user to input the user_id and replace "participant123" with the user_id
     steps_data = auth.get_user_steps("participant123", week_ago, today)
     print(steps_data)
 
-
-
-
+#TODO: Add a way to export all user data to a CSV file
+#TODO: Add a way to get data for multiple users at once
+#TODO: Add a way for the user operating to choose the step they want to do in the pipeline
+#TODO: Adjust the scopes to only get the data that is needed
+#TODO: Extra testing to make sure the code works as expected w/ other users
+#TODO: Storing method for JSON file
