@@ -21,7 +21,7 @@ class FitbitAuthSimple:
             oauth2=True
         )
         url, _ = client.client.authorize_token_url(
-            scope=['activity', 'heartrate', 'sleep', 'profile']
+            scope=['activity', 'profile']
         )
         return url
 
@@ -84,28 +84,28 @@ class FitbitAuthSimple:
 # Usage example
 if __name__ == "__main__":
     auth = FitbitAuthSimple()
-    
-    # Step 1: Generate link for participant
-    user_id = "Nell"
-    # auth_link = auth.get_auth_link(user_id)
-    # print(f"\nGive this link to participant {user_id}:")
-    # print(auth_link)
-    
-    # Step 2: After participant clicks link and authorizes, they'll be redirected to a URL
-    # The URL will contain the auth code like: http://localhost:8080?code=XXXX
-    # Extract the code from URL and use it here:
-    # code = input("\nEnter the code from the URL: ")
-    # auth.save_token_from_code(user_id, code)
-    
-    # Step 3: Now you can use the Fitbit API with the saved token
-    # Get steps for last 7 days
-    from datetime import datetime, timedelta
-    today = datetime.now().strftime('%Y-%m-%d')
-    week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
 
-    # #TODO: Add a input for the user to input the user_id and replace "participant123" with the user_id
-    steps_data = auth.get_user_steps(user_id, week_ago, today)
-    print(steps_data)
+    option = input("What step would you like to do? \n1. Generate link for participant \n2. Save token from code \n3. Get single user steps \n")
+
+    if option == "1":
+        user_id = input("Enter the user_id: ")
+        auth_link = auth.get_auth_link(user_id)
+        print(f"\nGive this link to participant {user_id}:")
+        print(auth_link)
+    elif option == "2":
+        user_id = input("Enter the user_id: ")
+        code = input("\nEnter the code from the URL: ")
+        auth.save_token_from_code(user_id, code)
+    elif option == "3":
+        user_id = input("Enter the user_id: ")
+        days = int(input("Enter the number of days you want to look back: "))
+        from datetime import datetime, timedelta
+        today = datetime.now().strftime('%Y-%m-%d')
+        time_ago = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+        steps_data = auth.get_user_steps(user_id, time_ago, today)
+        print(steps_data)
+    else:
+        print("Invalid option")
 
 #TODO: Add a way to export all user data to a CSV file
 #TODO: Add a way to get data for multiple users at once
