@@ -1,8 +1,11 @@
+# %%
 import os
 import json
 import fitbit
+import pandas as pd
 from dotenv import load_dotenv
 
+# %%
 class FitbitAuthSimple:
     def __init__(self):
         load_dotenv()
@@ -81,35 +84,45 @@ class FitbitAuthSimple:
             print(f"Error fetching steps: {e}")
             return None
 
-# Usage example
+# %%
+# Usage
 if __name__ == "__main__":
     auth = FitbitAuthSimple()
 
-    option = input("What step would you like to do? \n1. Generate link for participant \n2. Save token from code \n3. Get single user steps \n")
+    option = input("What step would you like to do? \n1. Generate link for participant \n2. Save token from code \n3. Get single user steps for a certain range \n")
 
-    if option == "1":
-        user_id = input("Enter the user_id: ")
-        auth_link = auth.get_auth_link(user_id)
-        print(f"\nGive this link to participant {user_id}:")
-        print(auth_link)
-    elif option == "2":
-        user_id = input("Enter the user_id: ")
-        code = input("\nEnter the code from the URL: ")
-        auth.save_token_from_code(user_id, code)
-    elif option == "3":
-        user_id = input("Enter the user_id: ")
-        days = int(input("Enter the number of days you want to look back: "))
-        from datetime import datetime, timedelta
-        today = datetime.now().strftime('%Y-%m-%d')
-        time_ago = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-        steps_data = auth.get_user_steps(user_id, time_ago, today)
-        print(steps_data)
-    else:
-        print("Invalid option")
+    match option:
+        case "1":
+            user_id = input("Enter the user_id: ")
+            auth_link = auth.get_auth_link(user_id)
+            print(f"\nGive this link to participant {user_id}:")
+            print(auth_link)
+        case "2":
+            user_id = input("Enter the user_id: ")
+            code = input("\nEnter the code from the URL: ")
+            auth.save_token_from_code(user_id, code)
+        case "3":
+            user_id = input("Enter the user_id: ")
+            days = int(input("Enter the number of days you want to look back: "))
+            from datetime import datetime, timedelta
+            today = datetime.now().strftime('%Y-%m-%d')
+            time_ago = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+            steps_data = auth.get_user_steps(user_id, time_ago, today)
+
+            # Convert to DataFrame
+            if steps_data and 'activities-steps' in steps_data:
+                df = pd.DataFrame(steps_data['activities-steps'])
+                df.columns = ['Date', 'Steps']  # Rename columns
+                df['Steps'] = df['Steps'].astype(int)  # Convert steps to integers
+                print("\nSteps Data:")
+                print(df)
+            else:
+                print("No data available")
+        case _:
+            print("Invalid option")
 
 #TODO: Add a way to export all user data to a CSV file
 #TODO: Add a way to get data for multiple users at once
 #TODO: Add a way for the user operating to choose the step they want to do in the pipeline
-#TODO: Adjust the scopes to only get the data that is needed
 #TODO: Extra testing to make sure the code works as expected w/ other users
 #TODO: Storing method for JSON file
