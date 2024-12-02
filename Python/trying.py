@@ -86,7 +86,7 @@ if __name__ == "__main__":
     auth = FitbitAuthSimple()
     
     # Step 1: Generate link for participant
-    # user_id = "participant123"
+    user_id = "Nell"
     # auth_link = auth.get_auth_link(user_id)
     # print(f"\nGive this link to participant {user_id}:")
     # print(auth_link)
@@ -103,8 +103,8 @@ if __name__ == "__main__":
     today = datetime.now().strftime('%Y-%m-%d')
     week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
 
-    #TODO: Add a input for the user to input the user_id and replace "participant123" with the user_id
-    steps_data = auth.get_user_steps("participant123", week_ago, today)
+    # #TODO: Add a input for the user to input the user_id and replace "participant123" with the user_id
+    steps_data = auth.get_user_steps(user_id, week_ago, today)
     print(steps_data)
 
 #TODO: Add a way to export all user data to a CSV file
