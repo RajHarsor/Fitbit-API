@@ -61,7 +61,7 @@ class FitbitAuthSimple:
         tokens = self._load_all_tokens().get(user_id)
         if not tokens:
             raise ValueError(f"No tokens found for user {user_id}")
-        
+
         client = fitbit.Fitbit(
             self.client_id,
             self.client_secret,
@@ -123,6 +123,4 @@ if __name__ == "__main__":
 
 #TODO: Add a way to export all user data to a CSV file
 #TODO: Add a way to get data for multiple users at once
-#TODO: Add a way for the user operating to choose the step they want to do in the pipeline
-#TODO: Extra testing to make sure the code works as expected w/ other users
 #TODO: Storing method for JSON file
