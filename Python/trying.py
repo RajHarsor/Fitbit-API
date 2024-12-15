@@ -305,6 +305,5 @@ if __name__ == "__main__":
         case _:
             print("Invalid option")
 
-#TODO: Add a way to export all user data to a CSV file
-#TODO: Add a way to get data for multiple users at once
-#TODO: Storing method for JSON file
+# TODO: Sleep data
+# TODO: Activity data
