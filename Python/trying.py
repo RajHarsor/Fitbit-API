@@ -15,6 +15,7 @@ class FitbitAuthSimple:
         # Use a dummy redirect URI - Fitbit will still show the code
         self.redirect_uri = os.getenv('FITBIT_REDIRECT_URI')
         self.token_file = 'user_tokens.json'
+        self.info_file = 'study_info.json'
 
     def get_auth_link(self, user_id):
         """Generate authorization link for a participant"""
@@ -25,7 +26,7 @@ class FitbitAuthSimple:
             oauth2=True
         )
         url, _ = client.client.authorize_token_url(
-            scope=['activity', 'profile']
+            scope=['activity', 'sleep']
         )
         return url
 
@@ -39,6 +40,15 @@ class FitbitAuthSimple:
         )
         tokens = client.client.fetch_access_token(auth_code)
         self._save_tokens(user_id, tokens)
+
+        # Prompt for additional information
+        wave_number = input("Enter wave number: ")
+        study_start_date = input("Enter study start date (YYYY-MM-DD): ")
+        study_end_date = input("Enter study end date (YYYY-MM-DD): ")
+
+        # Save additional information
+        self._save_user_info(user_id, wave_number, study_start_date, study_end_date)
+
         return tokens
 
     def _save_tokens(self, user_id, tokens):
@@ -53,6 +63,25 @@ class FitbitAuthSimple:
                 return json.load(f)
         except FileNotFoundError:
             return {}
+
+    def _load_all_info(self):
+        try:
+            with open(self.info_file, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
+        except json.JSONDecodeError:
+            return {}
+
+    def _save_user_info(self, user_id, wave_number, study_start_date, study_end_date):
+        all_info = self._load_all_info()
+        all_info[user_id] = {
+            'wave_number': wave_number,
+            'study_start_date': study_start_date,
+            'study_end_date': study_end_date
+        }
+        with open(self.info_file, 'w') as f:
+            json.dump(all_info, f)
 
     def get_user_steps(self, user_id, start_date, end_date=None):
         """Get step data for a user between dates
@@ -86,6 +115,7 @@ class FitbitAuthSimple:
             return None
 
     def extract_all_users_steps(self, json_file_path, start_date, end_date):
+        """Extract steps data for all users between dates"""
         # Read JSON file
         with open(json_file_path, 'r') as file:
             all_users_data = json.load(file)
@@ -121,15 +151,14 @@ class FitbitAuthSimple:
                 steps_data = client.time_series('activities/steps', base_date=start_date, end_date=end_date)
                 for day in steps_data['activities-steps']:
                     date = datetime.strptime(day['dateTime'], '%Y-%m-%d')
-                    print(f"Checking date: {day['dateTime']} (parsed: {date})")
                     if start <= date <= end:
                         all_data.append({
                             'user_id': user_id,
                             'date': day['dateTime'],
                             'steps': int(day['value'])
                         })
-                        # Debug print
-                        print(f"User: {user_id}, Date: {day['dateTime']}, Steps: {day['value']}")
+                    # Debug print
+                    print(f"User: {user_id}, Date: {day['dateTime']}, Steps: {day['value']}")
             except Exception as e:
                 print(f"Error retrieving data for user {user_id}: {e}")
 
@@ -144,12 +173,69 @@ class FitbitAuthSimple:
             print("No data found for the specified date range")
             return None
 
+    def extract_all_users_steps_study_period(self):
+        """Extract steps data for all users according to the study period"""
+        # Read JSON file
+        with open(self.info_file, 'r') as file:
+            all_users_data = json.load(file)
+
+        # Lists to store data
+        all_data = []
+
+        # Loop through each user
+        for user_id, user_data in all_users_data.items():
+            print(f"Processing user: {user_id}")
+            tokens = self._load_all_tokens().get(user_id)
+            if not tokens:
+                print(f"No tokens found for user {user_id}")
+                continue
+
+            client = fitbit.Fitbit(
+                self.client_id,
+                self.client_secret,
+                access_token=tokens['access_token'],
+                refresh_token=tokens['refresh_token'],
+                refresh_cb=lambda token: self._save_tokens(user_id, token),
+                oauth2=True
+            )
+
+            try:
+                steps_data = client.time_series('activities/steps', base_date=user_data['study_start_date'], end_date=user_data['study_end_date'])
+                for day in steps_data['activities-steps']:
+                    date = datetime.strptime(day['dateTime'], '%Y-%m-%d')
+                    if date > datetime.now():
+                        steps = float('nan')
+                    else:
+                        steps = int(day['value'])
+                    all_data.append({
+                        'user_id': user_id,
+                        'wave_number': user_data['wave_number'],
+                        'date': day['dateTime'],
+                        'steps': steps
+                    })
+                    # Debug print
+                    print(f"User: {user_id}, Date: {day['dateTime']}, Steps: {day['value']}")
+            except Exception as e:
+                print(f"Error retrieving data for user {user_id}: {e}")
+
+        # Create DataFrame
+        if all_data:
+            df = pd.DataFrame(all_data)
+            df['steps'] = df['steps'].astype(float)
+            output_file = f'steps_data_study_period.csv'
+            df.to_csv(output_file, index=False)
+            print(f"Data exported to {output_file}")
+            return df
+        else:
+            print("No data found for the specified date range")
+            return None
+
 # %%
 # Usage
 if __name__ == "__main__":
     auth = FitbitAuthSimple()
 
-    option = input("What step would you like to do? \n1. Generate link for participant \n2. Save token from code \n3. Get single user steps for a certain range \n4. Extract all users data to a CSV file \n")
+    option = input("What step would you like to do? \n1. Generate link for participant \n2. Save token from code \n3. Get single user steps for a certain range \n4. Extract all users data to a CSV file from a date range \n5. Extract all users data according to the study period \n")
 
     match option:
         case "1": # Generate link for participant to authorize
@@ -185,6 +271,11 @@ if __name__ == "__main__":
                 if result_df is not None:
                     print("\nExtracted Data:")
                     print(result_df)
+        case "5": # Extract all users data according to the study period
+            result_df = auth.extract_all_users_steps_study_period()
+            if result_df is not None:
+                print("\nExtracted Data:")
+                print(result_df)
         case _:
             print("Invalid option")
 
