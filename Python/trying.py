@@ -82,6 +82,29 @@ class FitbitAuthSimple:
         }
         with open(self.info_file, 'w') as f:
             json.dump(all_info, f)
+    
+    def delete_user(self, user_id):
+        """Delete user from both JSON files"""
+        # Load tokens and info
+        all_tokens = self._load_all_tokens()
+        all_info = self._load_all_info()
+
+        # Remove user if exists
+        if user_id in all_tokens:
+            del all_tokens[user_id]
+            with open(self.token_file, 'w') as f:
+                json.dump(all_tokens, f)
+            print(f"Deleted user {user_id} from tokens file.")
+        else:
+            print(f"User {user_id} not found in tokens file.")
+
+        if user_id in all_info:
+            del all_info[user_id]
+            with open(self.info_file, 'w') as f:
+                json.dump(all_info, f)
+            print(f"Deleted user {user_id} from info file.")
+        else:
+            print(f"User {user_id} not found in info file.")
 
     def get_user_steps(self, user_id, start_date, end_date=None):
         """Get step data for a user between dates
@@ -235,7 +258,7 @@ class FitbitAuthSimple:
 if __name__ == "__main__":
     auth = FitbitAuthSimple()
 
-    option = input("What step would you like to do? \n1. Generate link for participant \n2. Save token from code \n3. Get single user steps for a certain range \n4. Extract all users data to a CSV file from a date range \n5. Extract all users data according to the study period \n")
+    option = input("What step would you like to do? \n1. Generate link for participant \n2. Save token from code \n3. Get single user steps for a certain range \n4. Extract all users data to a CSV file from a date range \n5. Extract all users data according to the study period \n6. Delete a user \n")
 
     match option:
         case "1": # Generate link for participant to authorize
@@ -276,6 +299,9 @@ if __name__ == "__main__":
             if result_df is not None:
                 print("\nExtracted Data:")
                 print(result_df)
+        case "6": # Delete user
+            user_id = input("Enter the user_id you want to delete: ")
+            auth.delete_user(user_id)
         case _:
             print("Invalid option")
 
