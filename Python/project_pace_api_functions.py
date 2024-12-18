@@ -252,3 +252,72 @@ class FitbitAuthSimple:
         else:
             print("No data found for the specified date range")
             return None
+
+    def extract_all_users_sleepData_study_period(self):
+        """Extract sleep data for all users according to the study period"""
+        # Read JSON file
+        with open(self.info_file, 'r') as file:
+            all_users_data = json.load(file)
+
+        # Lists to store data
+        all_data = []
+
+        # Loop through each user
+        for user_id, user_data in all_users_data.items():
+            print(f"Processing user: {user_id}")
+            tokens = self._load_all_tokens().get(user_id)
+            if not tokens:
+                print(f"No tokens found for user {user_id}")
+                continue
+
+            client = fitbit.Fitbit(
+                self.client_id,
+                self.client_secret,
+                access_token=tokens['access_token'],
+                refresh_token=tokens['refresh_token'],
+                refresh_cb=lambda token: self._save_tokens(user_id, token),
+                oauth2=True
+            )
+
+            try:
+                sleep_data = client.time_series('sleep', base_date=user_data['study_start_date'], end_date=user_data['study_end_date'])
+                # Save all sleep data as a JSON file
+                #with open(f'sleep_data_{user_id}.json', 'w') as f:
+                    #json.dump(sleep_data, f)
+                for day in sleep_data['sleep']:
+                    date = datetime.strptime(day['dateOfSleep'], '%Y-%m-%d')
+                    if date > datetime.now():
+                        duration = float('nan')
+                        efficiency = float('nan')
+                        is_main_sleep = None
+                        logType = None
+                    else:
+                        duration = day['duration']
+                        efficiency = day['efficiency']
+                        is_main_sleep = day.get('isMainSleep', None)
+                        logType = day.get('logType', None)
+                    all_data.append({
+                        'user_id': user_id,
+                        'wave_number': user_data['wave_number'],
+                        'date': day['dateOfSleep'],
+                        'duration (ms)': duration,
+                        'efficiency': efficiency,
+                        'is_main_sleep': is_main_sleep,
+                        'log_type': logType
+                    })
+                    # Debug print
+                    print(f"User: {user_id}, Date: {day['dateOfSleep']}, Duration: {duration}, Efficiency: {efficiency}, isMainSleep: {is_main_sleep}, logType: {logType}")
+            except Exception as e:
+                print(f"Error retrieving data for user {user_id}: {e}")
+
+        # Create DataFrame
+        if all_data:
+            df = pd.DataFrame(all_data)
+            df['duration (ms)'] = df['duration (ms)'].astype(float)
+            # Convert duration from ms to mins
+            df['duration (mins)'] = df['duration (ms)'] / 60000
+            df['efficiency'] = df['efficiency'].astype(float)
+            output_file = f'sleep_data_study_period.csv'
+            df.to_csv(output_file, index=False)
+            print(f"Data exported to {output_file}")
+            return df
