@@ -2,7 +2,7 @@ import os
 import json
 import fitbit
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 # %%
@@ -321,3 +321,72 @@ class FitbitAuthSimple:
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
             return df
+
+    def extract_all_users_activity_study_period(self):
+        """Extract activity data for all users according to the study period"""
+        # Read JSON file
+        with open(self.info_file, 'r') as file:
+            all_users_data = json.load(file)
+
+        # Lists to store data
+        all_data = []
+
+        # Loop through each user
+        for user_id, user_data in all_users_data.items():
+            print(f"Processing user: {user_id}")
+            tokens = self._load_all_tokens().get(user_id)
+            if not tokens:
+                print(f"No tokens found for user {user_id}")
+                continue
+
+            client = fitbit.Fitbit(
+                self.client_id,
+                self.client_secret,
+                access_token=tokens['access_token'],
+                refresh_token=tokens['refresh_token'],
+                refresh_cb=lambda token: self._save_tokens(user_id, token),
+                oauth2=True
+            )
+
+            try:
+                """Get activity list for a user between dates"""
+                #Get activity data:
+                activity_data = client.activity_PACE_loglist(afterDate=user_data['study_start_date'])
+                
+                # Organize data
+                rows = []
+                for activities in activity_data["activities"]:
+                    row = {
+                        'user_id': user_id,
+                        'date': activities['startTime'].split('T')[0],
+                        'activityName': activities['activityName'],
+                        'activityTypeId': activities['activityTypeId'],
+                        'duration (ms)': activities['duration'],
+                        'duration (mins)': activities['duration'] / 60000,
+                        'originalDuration (ms)': activities['originalDuration'],
+                        'originalDuration (mins)': activities['originalDuration'] / 60000,
+                        'logType': activities['logType'],
+                        'manualValuesSpecified_steps': activities['manualValuesSpecified']['steps'],
+                        'startTime': activities['startTime'],
+                        'originalDuration': activities['originalDuration'],
+                        'lastModified': activities['lastModified']
+                    }
+                    # Add activity levels as separate columns
+                    for level in activities['activityLevel']:
+                        row[level['name']] = level['minutes']
+                    rows.append(row)
+                all_data.extend(rows)
+            except Exception as e:
+                print(f"Error retrieving data for user {user_id}: {e}")
+            
+        # Create DataFrame
+        if all_data:
+            df = pd.DataFrame(all_data)
+            output_file = f'activity_data_study_period.csv'
+            df.to_csv(output_file, index=False)
+            print(f"Data exported to {output_file}")
+            print(all_data)
+            return df
+        else:
+            print("No data found for the specified date range")
+            return None

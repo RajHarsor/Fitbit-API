@@ -11,7 +11,7 @@ import project_pace_api_functions as paf
 if __name__ == "__main__":
     auth = paf.FitbitAuthSimple()
 
-    option = input("What step would you like to do? \n1. Generate link for participant \n2. Save token from code \n3. Get single user steps for a certain range \n4. Extract all users data to a CSV file from a date range \n5. Extract all users data according to the study period \n6. Delete a user \n7. Get sleep data over the study period\n")
+    option = input("What step would you like to do? \n1. Generate link for participant \n2. Save token from code \n3. Get single user steps for a certain range \n4. Extract all users data to a CSV file from a date range \n5. Extract all users data according to the study period \n6. Delete a user \n7. Get sleep data over the study period\n8. Get activity data over the study period\n")
 
     match option:
         case "1": # Generate link for participant to authorize
@@ -58,6 +58,11 @@ if __name__ == "__main__":
             auth.delete_user(user_id)
         case "7": # Get sleep data
             result_df = auth.extract_all_users_sleepData_study_period()
+            if result_df is not None:
+                print("\nExtracted Data:")
+                print(result_df)
+        case "8": # Get activity data
+            result_df = auth.extract_all_users_activity_study_period()
             if result_df is not None:
                 print("\nExtracted Data:")
                 print(result_df)
