@@ -5,6 +5,7 @@ import fitbit
 import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
+from urllib.parse import urlparse, parse_qs
 import project_pace_api_functions as paf
 # %%
 # Usage
@@ -21,8 +22,9 @@ if __name__ == "__main__":
             print(auth_link)
         case "2": # Save token from code
             user_id = input("Enter the user_id: ")
-            code = input("\nEnter the code from the URL: ")
-            # TODO: URL Parse to get code
+            link_code = input("\nInput URL that the participant recieved: ")
+            parsed_url = urlparse(link_code)
+            code = parse_qs(parsed_url.query)['code'][0]
             auth.save_token_from_code(user_id, code)
         case "3": # Get steps for a user up to a certain amount of days back
             user_id = input("Enter the user_id: ")
