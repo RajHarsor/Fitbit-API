@@ -70,6 +70,3 @@ if __name__ == "__main__":
                 print(result_df)
         case _:
             print("Invalid option")
-
-# TODO: Sleep data
-# TODO: Activity data
