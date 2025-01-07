@@ -21,6 +21,18 @@ After getting the zip file, you will need to extract the files from the zip file
 ### Step 3: Install the Required Libraries
 In order to use the Fitbit API, you will need to install the required libraries. You can do this by running the following command in your command prompt:
 
-```bash
-    pip install -r requirements.txt
+```
+    pip install -r [path to requirements.txt in the repository]
+```
+### Step 4: Linking the proper study_info.json and user_tokens.json files
+
+In order to access the Fitbit API, you will need to obtain the proper path for the study_info.json and user_tokens.json files. In these files, there is information relevant to data accessing and processing. In order for all of us to access the data, this information will be stored on the google drive.
+
+Since we need the path from google drive, we need to install the desktop version of google drive. You can download the desktop version of google drive [here](https://www.google.com/drive/download/). After downloading the desktop version of google drive, you will need to sign in with your Rowan email.
+
+After signing in, in your file explorer, you will see a Google Drive folder. You will need to navigate to the proper folder in order to access the study_info.json and user_tokens.json files. The path to the folder should be something like this:
+
+TODO: Add path to folder
+```
+    C:\Users\[Your Username]\Google Drive\PACE\PACE-Data\fitbit
 ```
