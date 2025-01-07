@@ -13,7 +13,6 @@ class FitbitAuthSimple:
         self.client_secret = os.getenv('FITBIT_CLIENT_SECRET')
         # Use a dummy redirect URI - Fitbit will still show the code
         self.redirect_uri = os.getenv('FITBIT_REDIRECT_URI')
-        # TODO: Need to change the JSON file locations to Google Drive so everyone can access
         self.token_file = os.getenv('TOKENS_PATH')
         self.info_file = os.getenv('INFO_PATH')
 
