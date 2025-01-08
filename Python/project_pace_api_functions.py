@@ -381,6 +381,7 @@ class FitbitAuthSimple:
         # Create DataFrame
         if all_data:
             df = pd.DataFrame(all_data)
+            #TODO Remove rows that are outside of the study period per user
             output_file = f'activity_data_study_period.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
