@@ -1,7 +1,8 @@
 # Fitbit API
 This tool is designed to access the Fitbit API using the command line. It is currently built for Project PACE.
 
-Current Version: v1.0b
+**Current Version**: v1.0b
+
 ## Installation
 
 ### Step 1: Download Python
