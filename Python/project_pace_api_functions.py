@@ -381,7 +381,14 @@ class FitbitAuthSimple:
         # Create DataFrame
         if all_data:
             df = pd.DataFrame(all_data)
-            #TODO Remove rows that are outside of the study period per user
+            # Go through each row and see if the date is outside the study period for that user. If it is, delete the row.
+            for index, row in df.iterrows():
+                user_id = row['user_id']
+                user_data = all_users_data[user_id]
+                date = datetime.strptime(row['date'], '%Y-%m-%d')
+                if date < datetime.strptime(user_data['study_start_date'], '%Y-%m-%d') or date > datetime.strptime(user_data['study_end_date'], '%Y-%m-%d'):
+                    df.drop(index, inplace=True)
+
             output_file = f'activity_data_study_period.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
