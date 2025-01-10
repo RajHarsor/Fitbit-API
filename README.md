@@ -38,11 +38,19 @@ For Windows:
 ```
 
 ```
-The paths for both of those files will be respectively put into the proper places in the .env file. The .env file will be provided on the Google Drive. You will need to download the .env file and place it in the Fitbit API folder. Following that, you will need to open the .env file and replace the placeholders with the proper paths.
+The paths for both of those files will be respectively put into the proper places in the .env file. The .env file will be provided on the Google Drive. You will need to download the .env file and place it in the Fitbit API folder. Following that, you will need to open the .env file and replace the placeholders with the proper paths (for info-path and tokens-path). Keep everything else the same (client ID, secret, etc.).
 
 ### Step 5: Custom Fitbit Library Installation
-In order to access the Fitbit API and get all the information we needed, I made changes to an existing Fitbit API Package. The changes I made are in the file called 'api.py' which you can find in this repository. You will need to replace the 'api.py' file in the Fitbit API package with the one in this repository. You can find the Fitbit API package in the following path:
+In order to access the Fitbit API and get all the information we needed, I made changes to an existing Fitbit API Package. The changes I made are in the file called 'api.py' which you can find in this repository. You will need to replace the 'api.py' file in the Fitbit API package with the one in this repository. You can find the Fitbit API package directory by typing in the following command in your command prompt/terminal:
 
+```bash
+    pip show fitbit
 ```
-    [path to the Fitbit API package]/fitbit/api.py
+After running that command, you will see the location of the Fitbit API package. You will need to navigate to that location and replace the 'api.py' file with the one in this repository in "fitbit" folder.
+
+### Step 6: Running the Program
+After completing all the steps above, you can now run the program. You can do this by running the following command in your terminal or command prompt:
+
+```bash
+    python [path to main.py in the repository]
 ```
