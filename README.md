@@ -65,6 +65,8 @@ python [path to project_pace_API.py in the repository]
 
 Once again, you need to replace the "[path to project_pace_API.py in the repository]" part of the command with the actual path of the file. This path can be found by navigating to the folder which you extracted the files to and finding the project_pace_API.py file in the "Python" folder. To get the path click on the file, then click "Home" on the top left of the file explorer, then click "Copy Path". Paste that path into the command.
 
-## Notes
+### Notes
 
 The Fitbit API has a limit on the number of requests you can make in a certain amount of time. This limit is 150 requests per hour per user. This shouldn't be an issue for Project PACE but it is important to note. Documentation for rate limits can be found [here](https://community.fitbit.com/t5/Web-API-Development/How-do-API-rate-limits-work/td-p/324370).
+
+## Supported Variables
