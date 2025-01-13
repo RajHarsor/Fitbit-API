@@ -70,3 +70,32 @@ Once again, you need to replace the "[path to project_pace_API.py in the reposit
 The Fitbit API has a limit on the number of requests you can make in a certain amount of time. This limit is 150 requests per hour per user. This shouldn't be an issue for Project PACE but it is important to note. Documentation for rate limits can be found [here](https://community.fitbit.com/t5/Web-API-Development/How-do-API-rate-limits-work/td-p/324370).
 
 ## Supported Variables
+
+### Activity Data
+- [Steps](https://dev.fitbit.com/build/reference/web-api/activity-timeseries/get-activity-timeseries-by-date-range/)
+- [Activity Log List](https://dev.fitbit.com/build/reference/web-api/activity-timeseries/get-activity-timeseries-by-date-range/)
+  - activeDuration
+  - activityLevel
+    - sedentary
+    - lightly
+    - fairly
+    - very
+  - activityName
+  - activityTypeId
+  - duration
+  - lastModified
+  - logId
+  - logType
+  - manualValuesSpecified
+    - steps
+  - originalDuration
+  - originalStartTime
+  - startTime
+  - steps
+
+### Sleep Data
+- dateOfSleep
+- duration (ms)
+- efficiency
+- isMainSleep
+- logType
