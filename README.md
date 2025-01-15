@@ -94,6 +94,7 @@ The Fitbit API has a limit on the number of requests you can make in a certain a
   - steps
 
 ### Sleep Data
+[Link](https://dev.fitbit.com/build/reference/web-api/sleep/get-sleep-log-by-date-range/)
 - dateOfSleep
 - duration (ms)
 - efficiency
