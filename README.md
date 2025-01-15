@@ -100,3 +100,4 @@ The Fitbit API has a limit on the number of requests you can make in a certain a
 - efficiency
 - isMainSleep
 - logType
+- startTime

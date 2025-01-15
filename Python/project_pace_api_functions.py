@@ -290,11 +290,13 @@ class FitbitAuthSimple:
                         efficiency = float('nan')
                         is_main_sleep = None
                         logType = None
+                        startTime = None
                     else:
                         duration = day['duration']
                         efficiency = day['efficiency']
                         is_main_sleep = day.get('isMainSleep', None)
                         logType = day.get('logType', None)
+                        startTime = day.get('startTime', None)
                     all_data.append({
                         'user_id': user_id,
                         'wave_number': user_data['wave_number'],
@@ -302,10 +304,11 @@ class FitbitAuthSimple:
                         'duration (ms)': duration,
                         'efficiency': efficiency,
                         'is_main_sleep': is_main_sleep,
-                        'log_type': logType
+                        'log_type': logType,
+                        'start_time': startTime
                     })
                     # Debug print
-                    print(f"User: {user_id}, Date: {day['dateOfSleep']}, Duration: {duration}, Efficiency: {efficiency}, isMainSleep: {is_main_sleep}, logType: {logType}")
+                    print(f"User: {user_id}, Date: {day['dateOfSleep']}, Duration: {duration}, Efficiency: {efficiency}, isMainSleep: {is_main_sleep}, logType: {logType}, startTime: {startTime}")
             except Exception as e:
                 print(f"Error retrieving data for user {user_id}: {e}")
 
