@@ -71,12 +71,23 @@ class FitbitAuthSimple:
         return tokens
 
     def _save_tokens(self, user_id, tokens):
+        """Save access and refresh tokens for a user to JSON
+
+        Args:
+            user_id (str): The ID of the user
+            tokens (dict): The access token and refresh token for the user
+        """
         all_tokens = self._load_all_tokens()
         all_tokens[user_id] = tokens
         with open(self.token_file, 'w') as f:
             json.dump(all_tokens, f)
 
     def _load_all_tokens(self):
+        """Load all access and refresh tokens from JSON
+
+        Returns:
+            dict: A dictionary of user IDs and their corresponding tokens
+        """
         try:
             with open(self.token_file, 'r') as f:
                 return json.load(f)
@@ -84,6 +95,11 @@ class FitbitAuthSimple:
             return {}
 
     def _load_all_info(self):
+        """Load all user information from JSON
+
+        Returns:
+            dict: A dictionary of user IDs and their corresponding information
+        """
         try:
             with open(self.info_file, 'r') as f:
                 return json.load(f)
@@ -93,6 +109,14 @@ class FitbitAuthSimple:
             return {}
 
     def _save_user_info(self, user_id, wave_number, study_start_date, study_end_date):
+        """Save user information to JSON
+
+        Args:
+            user_id (str): The ID of the user
+            wave_number (str): The wave number
+            study_start_date (str): The study start date
+            study_end_date (str): The study end date
+        """
         all_info = self._load_all_info()
         all_info[user_id] = {
             'wave_number': wave_number,
@@ -103,7 +127,11 @@ class FitbitAuthSimple:
             json.dump(all_info, f)
     
     def delete_user(self, user_id):
-        """Delete user from both JSON files"""
+        """Delete user from both JSON files
+
+        Args:
+            user_id (str): The ID of the user
+        """
         # Load tokens and info
         all_tokens = self._load_all_tokens()
         all_info = self._load_all_info()
@@ -126,9 +154,18 @@ class FitbitAuthSimple:
             print(f"User {user_id} not found in info file.")
 
     def get_user_steps(self, user_id, start_date, end_date=None):
-        """Get step data for a user between dates
-        start_date: YYYY-MM-DD string
-        end_date: YYYY-MM-DD string (optional, defaults to today)
+        """Get steps data for a user between two dates
+
+        Args:
+            user_id (str): The ID of the user
+            start_date (str): The start date in 'YYYY-MM-DD' format
+            end_date (str, optional): The end date in 'YYYY-MM-DD' format. Defaults to None, which means the last 1 day will be used.
+
+        Raises:
+            ValueError: If no tokens are found for the user
+
+        Returns:
+            dict: Steps data for the user between the specified dates
         """
         tokens = self._load_all_tokens().get(user_id)
         if not tokens:
@@ -157,7 +194,17 @@ class FitbitAuthSimple:
             return None
 
     def extract_all_users_steps(self, json_file_path, start_date, end_date):
-        """Extract steps data for all users between dates"""
+        """Extract steps data for all users between two dates
+
+        Args:
+            json_file_path (str): The path to the JSON file containing user data
+            start_date (str): The start date in 'YYYY-MM-DD' format
+            end_date (str): The end date in 'YYYY-MM-DD' format
+        Returns:
+            pd.DataFrame: A DataFrame containing steps data for all users between the specified dates
+        Raises:
+            FileNotFoundError: If the JSON file does not exist
+        """
         # Read JSON file
         with open(json_file_path, 'r') as file:
             all_users_data = json.load(file)
@@ -216,7 +263,13 @@ class FitbitAuthSimple:
             return None
 
     def extract_all_users_steps_study_period(self):
-        """Extract steps data for all users according to the study period"""
+
+        """Extract steps data for all users according to the study period defined in the info file
+
+        Returns:
+            pd.DataFrame: A DataFrame containing steps data for all users according to the study period
+        """
+
         # Read JSON file
         with open(self.info_file, 'r') as file:
             all_users_data = json.load(file)
@@ -273,7 +326,11 @@ class FitbitAuthSimple:
             return None
 
     def extract_all_users_sleepData_study_period(self):
-        """Extract sleep data for all users according to the study period"""
+        """Extract sleep data for all users according to the study period defined in the info file
+        
+        Returns:
+            pd.DataFrame: A DataFrame containing sleep data for all users according to the study period
+        """
         # Read JSON file
         with open(self.info_file, 'r') as file:
             all_users_data = json.load(file)
@@ -345,7 +402,12 @@ class FitbitAuthSimple:
             return df
 
     def extract_all_users_activity_study_period(self):
-        """Extract activity data for all users according to the study period"""
+        """Extract activity data for all users according to the study period defined in the info file
+
+        Returns:
+            pd.DataFrame: A DataFrame containing activity data for all users according to the study period
+        """
+
         # Read JSON file
         with open(self.info_file, 'r') as file:
             all_users_data = json.load(file)
