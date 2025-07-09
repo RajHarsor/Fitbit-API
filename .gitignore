@@ -2,3 +2,6 @@
 study_info.json
 user_tokens.json
 .env
+sleep_data_study_period.csv
+steps_data_study_period.csv
+Python/__pycache__/
