@@ -2,22 +2,36 @@ import os
 import json
 import fitbit
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from dotenv import load_dotenv
 
 # %%
 class FitbitAuthSimple:
     def __init__(self):
         load_dotenv()
+        
+        ## Initialize Fitbit API credentials and file paths (Google Drive)
         self.client_id = os.getenv('FITBIT_CLIENT_ID')
         self.client_secret = os.getenv('FITBIT_CLIENT_SECRET')
         # Use a dummy redirect URI - Fitbit will still show the code
         self.redirect_uri = os.getenv('FITBIT_REDIRECT_URI')
         self.token_file = os.getenv('TOKENS_PATH')
         self.info_file = os.getenv('INFO_PATH')
+        
+        ## Initialize AWS S3 credentials (if needed)
+        self.aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
+        self.aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+        self.region_name = "us-east-1"  # Default region, can be changed if needed
 
     def get_auth_link(self, user_id):
-        """Generate authorization link for a participant"""
+        """Generate authorization link for a participant
+
+        Args:
+            user_id (str): The ID of the user
+
+        Returns:
+            str: The authorization URL that the user should visit to authorize the application
+        """
         client = fitbit.Fitbit(
             self.client_id,
             self.client_secret,
@@ -28,9 +42,18 @@ class FitbitAuthSimple:
             scope=['activity', 'sleep']
         )
         return url
+        
 
     def save_token_from_code(self, user_id, auth_code):
-        """Save token using auth code from URL"""
+        """Save token using auth code from URL
+        
+        Args:
+            user_id (str): The ID of the user
+            auth_code (str): The authorization code received from Fitbit after user authorization
+            
+        Returns:
+            dict: The access token and refresh token for the user
+        """
         client = fitbit.Fitbit(
             self.client_id,
             self.client_secret,
