@@ -484,3 +484,7 @@ class FitbitAuthSimple:
         else:
             print("No data found for the specified date range")
             return None
+
+
+"""NEW METHODS FOR V2.0"""
+
