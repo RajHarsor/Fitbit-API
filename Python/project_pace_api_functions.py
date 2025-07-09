@@ -43,11 +43,11 @@ class FitbitAuthSimple:
 
     def save_token_from_code(self, user_id, auth_code):
         """Save token using auth code from URL
-        
+
         Args:
             user_id (str): The ID of the user
             auth_code (str): The authorization code received from Fitbit after user authorization
-            
+
         Returns:
             dict: The access token and refresh token for the user
         """
@@ -149,7 +149,7 @@ class FitbitAuthSimple:
                                         base_date=start_date,
                                         end_date=end_date)
             else:
-                return client.time_series('activities/steps', 
+                return client.time_series('activities/steps',
                                         base_date=start_date,
                                         period='1d')
         except Exception as e:
