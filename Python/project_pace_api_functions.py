@@ -200,8 +200,10 @@ class FitbitAuthSimple:
             json_file_path (str): The path to the JSON file containing user data
             start_date (str): The start date in 'YYYY-MM-DD' format
             end_date (str): The end date in 'YYYY-MM-DD' format
+        
         Returns:
             pd.DataFrame: A DataFrame containing steps data for all users between the specified dates
+        
         Raises:
             FileNotFoundError: If the JSON file does not exist
         """
