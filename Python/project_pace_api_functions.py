@@ -21,7 +21,7 @@ class FitbitAuthSimple:
         ## Initialize AWS S3 credentials (if needed)
         self.aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
         self.aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
-        self.region_name = "us-east-1"  # Default region, can be changed if needed
+        self.region_name = "us-east-1"
 
     def get_auth_link(self):
         """Generate authorization link for a participant
