@@ -23,11 +23,8 @@ class FitbitAuthSimple:
         self.aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
         self.region_name = "us-east-1"  # Default region, can be changed if needed
 
-    def get_auth_link(self, user_id):
+    def get_auth_link(self):
         """Generate authorization link for a participant
-
-        Args:
-            user_id (str): The ID of the user
 
         Returns:
             str: The authorization URL that the user should visit to authorize the application
