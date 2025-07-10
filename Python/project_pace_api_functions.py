@@ -4,6 +4,7 @@ import fitbit
 import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
+import boto3
 
 # %%
 class FitbitAuthSimple:
@@ -18,7 +19,7 @@ class FitbitAuthSimple:
         self.token_file = os.getenv('TOKENS_PATH')
         self.info_file = os.getenv('INFO_PATH')
         
-        ## Initialize AWS S3 credentials (if needed)
+        ## Initialize AWS credentials
         self.aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
         self.aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
         self.region_name = "us-east-1"
@@ -64,10 +65,35 @@ class FitbitAuthSimple:
         wave_number = input("Enter wave number: ")
         study_start_date = input("Enter study start date (YYYY-MM-DD): ")
         study_end_date = input("Enter study end date (YYYY-MM-DD): ")
+        phone_number = input("Enter phone number (+1XXXXXXXXXX): ")
+        morning_send_time = input("Enter morning send in MILITARY time (HH:MM): ")
+        evening_send_time = input("Enter evening send time IN MILITARY time (HH:MM): ")
 
         # Save additional information
-        self._save_user_info(user_id, wave_number, study_start_date, study_end_date)
+        self._save_user_info(user_id, wave_number, study_start_date, study_end_date, phone_number, morning_send_time, evening_send_time)
+        
+        # Send information to AWS dynamoDB
+        
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.region_name
+        )
 
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table("YourDynamoDBTableName")
+
+        # Save user information to DynamoDB
+        table.put_item(Item={
+            'user_id': user_id,
+            'wave_number': wave_number,
+            'study_start_date': study_start_date,
+            'study_end_date': study_end_date,
+            'phone_number': phone_number,
+            'morning_send_time': morning_send_time,
+            'evening_send_time': evening_send_time
+        })
+        print(f"User {user_id} authorized and information saved.")
         return tokens
 
     def _save_tokens(self, user_id, tokens):
@@ -488,3 +514,87 @@ class FitbitAuthSimple:
 
 """NEW METHODS FOR V2.0"""
 
+def check_env_file_exists() -> bool:
+    """Check if the .env file exists in the current directory
+
+    Returns:
+        bool: True if the .env file exists, False otherwise
+    """
+    load_dotenv()
+    return os.path.exists('.env')
+
+def check_env_variables() -> tuple[bool, str]:
+    """Check if all required environment variables are set
+
+    Returns:
+        tuple[bool, str]: A tuple containing a boolean indicating if all variables are set,
+                          and a string with the names of any missing variables
+    """
+    current_dir = os.getcwd()
+    env_file_path = os.path.join(current_dir, '.env')
+    
+    # Read the .env file firectly to check for variables
+    env_vars = {}
+    try:
+        with open('.env', 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    env_vars[key.strip()] = value.strip()
+    except Exception as e:
+        return False, f"Error reading .env file: {e}"
+    
+    required_vars = [
+        'FITBIT_CLIENT_ID',
+        'FITBIT_CLIENT_SECRET',
+        'FITBIT_CALLBACK_URL',
+        'TOKENS_PATH',
+        'INFO_PATH',
+        'AWS_ACCESS_KEY_ID',
+        'AWS_SECRET_ACCESS_KEY',
+        'AWS_REGION',
+        'AWS_TABLE_NAME'
+    ]
+    
+    missing_vars = []
+    for var in required_vars:
+        if var not in env_vars or not env_vars[var]:
+            missing_vars.append(var)
+    
+    if missing_vars:
+        return False, f"{', '.join(missing_vars)}"
+    else:
+        return True, "All required environment variables are set."
+
+def create_env_file(fitbit_client_id: str,
+                    fitbit_client_secret: str,
+                    tokens_path: str,
+                    info_path: str,
+                    aws_access_key_id: str,
+                    aws_secret_access_key: str):
+    """Create a .env file with the provided environment variables
+
+    Args:
+        fitbit_client_id (str): Fitbit client ID
+        fitbit_client_secret (str): Fitbit client secret
+        tokens_path (str): Path to the tokens JSON file
+        info_path (str): Path to the user info JSON file
+        aws_access_key_id (str): AWS access key ID
+        aws_secret_access_key (str): AWS secret access key
+        
+    Returns:
+        None
+    """
+    with open('.env', 'w') as f:
+        f.write(f"FITBIT_CLIENT_ID={fitbit_client_id}\n")
+        f.write(f"FITBIT_CLIENT_SECRET={fitbit_client_secret}\n")
+        f.write(f"FITBIT_CALLBACK_URL=https://drarigo.wordpress.com\n")
+        f.write(f"TOKENS_PATH={tokens_path}\n")
+        f.write(f"INFO_PATH={info_path}\n")
+        f.write(f"AWS_ACCESS_KEY_ID={aws_access_key_id}\n")
+        f.write(f"AWS_SECRET_ACCESS_KEY={aws_secret_access_key}\n")
+        f.write(f"AWS_REGION=us-east-1\n")
+        f.write(f"AWS_TABLE_NAME=PACE_Participants\n")
+
+# %%
