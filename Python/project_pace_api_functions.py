@@ -601,4 +601,53 @@ def create_env_file(fitbit_client_id: str,
         f.write(f"AWS_REGION=us-east-1\n")
         f.write(f"AWS_TABLE_NAME=PACE_Participants\n")
 
-# %%
+def update_env_file():
+    """Updates one of the .env file with new environment variables
+
+    Returns:
+        None
+    """
+    # Make the user choose which variable to update
+    print("Which environment variable would you like to update?")
+    print("1. FITBIT_CLIENT_ID\n2. FITBIT_CLIENT_SECRET\n3. TOKENS_PATH\n4. INFO_PATH\n5. AWS_ACCESS_KEY_ID\n6. AWS_SECRET_ACCESS_KEY\n7. AWS_REGION\n8. AWS_TABLE_NAME")
+
+    choice = input("Enter the number of your choice: ")
+    env_var_name = ""
+    match choice:
+        case "1":
+            env_var_name = "FITBIT_CLIENT_ID"
+        case "2":
+            env_var_name = "FITBIT_CLIENT_SECRET"
+        case "3":
+            env_var_name = "TOKENS_PATH"
+        case "4":
+            env_var_name = "INFO_PATH"
+        case "5":
+            env_var_name = "AWS_ACCESS_KEY_ID"
+        case "6":
+            env_var_name = "AWS_SECRET_ACCESS_KEY"
+        case "7":
+            env_var_name = "AWS_REGION"
+        case "8":
+            env_var_name = "AWS_TABLE_NAME"
+        case _:
+            print("Invalid choice")
+            return
+
+    new_value = input(f"Enter the new value for {env_var_name}: ")
+
+    # Update the .env file
+    current_dir = os.getcwd()
+    env_file_path = os.path.join(current_dir, '.env')
+
+    try:
+        with open(env_file_path, 'r') as f:
+            lines = f.readlines()
+        with open(env_file_path, 'w') as f:
+            for line in lines:
+                if line.startswith(env_var_name):
+                    f.write(f"{env_var_name}={new_value}\n")
+                else:
+                    f.write(line)
+    except Exception as e:
+        print(f"Error updating .env file: {e}")
