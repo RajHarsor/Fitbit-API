@@ -115,9 +115,13 @@ if __name__ == "__main__":
             if result_df is not None:
                 print("\nExtracted Data:")
                 print(result_df)
-        case "8": # Update env file
+        case "8": # Send test text messages to a user
+            user_id = input("Enter the user_id you want to send test messages to: ")
+            message = input("Enter the message you want to send: ")
+            paf.send_test_text_message(user_id, message) #TODO make this method
+        case "9": # Update env file
             paf.update_env_file()
-        case "9": # Exit the program
+        case "10": # Exit the program
             print("Exiting the program.")
             exit(1)
         case _:
