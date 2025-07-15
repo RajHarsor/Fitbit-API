@@ -22,6 +22,7 @@ class FitbitAuthSimple:
         ## Initialize AWS credentials
         self.aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
         self.aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+        self.aws_table_name = os.getenv('AWS_TABLE_NAME')
         self.region_name = "us-east-1"
 
     def get_auth_link(self):
@@ -81,11 +82,11 @@ class FitbitAuthSimple:
         )
 
         dynamodb = Session.resource("dynamodb")
-        table = dynamodb.Table("YourDynamoDBTableName")
+        table = dynamodb.Table(self.aws_table_name)
 
         # Save user information to DynamoDB
         table.put_item(Item={
-            'user_id': user_id,
+            'participant_id': user_id,
             'wave_number': wave_number,
             'study_start_date': study_start_date,
             'study_end_date': study_end_date,
@@ -134,7 +135,7 @@ class FitbitAuthSimple:
         except json.JSONDecodeError:
             return {}
 
-    def _save_user_info(self, user_id, wave_number, study_start_date, study_end_date):
+    def _save_user_info(self, user_id, wave_number, study_start_date, study_end_date, phone_number, morning_send_time, evening_send_time):
         """Save user information to JSON
 
         Args:
@@ -147,7 +148,10 @@ class FitbitAuthSimple:
         all_info[user_id] = {
             'wave_number': wave_number,
             'study_start_date': study_start_date,
-            'study_end_date': study_end_date
+            'study_end_date': study_end_date,
+            'phone_number': phone_number,
+            'morning_send_time': morning_send_time,
+            'evening_send_time': evening_send_time
         }
         with open(self.info_file, 'w') as f:
             json.dump(all_info, f)

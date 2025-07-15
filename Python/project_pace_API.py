@@ -7,11 +7,15 @@ from datetime import datetime
 from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qs
 import project_pace_api_functions as paf
+import time
 # %%
 # Usage
 if __name__ == "__main__":
     auth = paf.FitbitAuthSimple()
-    
+
+    print("Project Pace Text Database + Fitbit API")
+    time.sleep(1)
+
     """ Initialization of Environment"""
     # Check if .env file exists
     print("Checking if .env file exists...")
@@ -62,7 +66,7 @@ if __name__ == "__main__":
     match option:
         case "1": # Generate link for participant to authorize
             user_id = input("Enter the user_id: ")
-            auth_link = auth.get_auth_link(user_id)
+            auth_link = auth.get_auth_link()
             print(f"\nGive this link to participant {user_id}:")
             print(auth_link)
             link_code = input("\nInput URL that the participant recieved: ")
