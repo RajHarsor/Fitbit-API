@@ -651,3 +651,42 @@ def update_env_file():
                     f.write(line)
     except Exception as e:
         print(f"Error updating .env file: {e}")
+
+def send_test_message():
+    """Send a test message to the specified phone number using AWS SNS
+    Args:
+        phone_number (str): The phone number to send the message to
+        message (str): The message to send
+
+    Returns:
+        None
+    """
+    user_id = input("Enter the participant ID you want to send a message to: ")
+    message = input("Enter the message you want to send: ")
+
+    # Initialize dynamoDB client
+    Session = boto3.Session(
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+        region_name=os.getenv('AWS_REGION')
+    )
+    
+    dynamodb = Session.resource("dynamodb")
+    table = dynamodb.Table(os.getenv('AWS_TABLE_NAME'))
+    
+    # Get the user's phone number from the DynamoDB table
+    response = table.get_item(Key={'participant_id': user_id})
+    # Print the phone number
+    if 'Item' in response:
+        print(f"Sending message to user {user_id} with phone number {response['Item']['phone_number']}")
+    if 'Item' not in response:
+        print(f"No user found with ID {user_id}")
+        return
+    
+    sns = Session.client('sns')
+
+    # Send the test message
+    sns.publish(
+        PhoneNumber=response['Item']['phone_number'],
+        Message=message
+    )

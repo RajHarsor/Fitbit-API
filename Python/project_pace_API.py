@@ -59,7 +59,7 @@ if __name__ == "__main__":
             print("All required environment variables are set.")
 
     """ Options for user interaction """
-    print("What step would you like to do? \n1. Generate link for participant & save token \n2. Get single user steps for a certain range \n3. Extract all users data to a CSV file from a date range \n4. Extract all users data according to the study period \n5. Delete a user \n6. Get sleep data over the study period\n7. Get activity data over the study period\n8. Update environment variable\n9. Exit")
+    print("What step would you like to do? \n1. Generate link for participant & save token \n2. Get single user steps for a certain range \n3. Extract all users data to a CSV file from a date range \n4. Extract all users data according to the study period \n5. Delete a user \n6. Get sleep data over the study period\n7. Get activity data over the study period\n8. Send test message\n9. Update environment variable\n10. Exit")
 
     option = input("Enter the number of the option you want to execute: ")
     
@@ -116,9 +116,7 @@ if __name__ == "__main__":
                 print("\nExtracted Data:")
                 print(result_df)
         case "8": # Send test text messages to a user
-            user_id = input("Enter the user_id you want to send test messages to: ")
-            message = input("Enter the message you want to send: ")
-            paf.send_test_text_message(user_id, message) #TODO make this method
+            paf.send_test_message()
         case "9": # Update env file
             paf.update_env_file()
         case "10": # Exit the program
