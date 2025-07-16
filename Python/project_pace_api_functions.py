@@ -182,6 +182,21 @@ class FitbitAuthSimple:
             print(f"Deleted user {user_id} from info file.")
         else:
             print(f"User {user_id} not found in info file.")
+            
+        # Delete user from AWS DynamoDB
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.region_name
+        )
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table(self.aws_table_name)
+        
+        try:
+            table.delete_item(Key={'participant_id': user_id})
+            print(f"Deleted user {user_id} from AWS DynamoDB.")
+        except Exception as e:
+            print(f"Error deleting user {user_id} from AWS DynamoDB: {e}")
 
     def get_user_steps(self, user_id, start_date, end_date=None):
         """Get steps data for a user between two dates

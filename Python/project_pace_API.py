@@ -59,6 +59,8 @@ if __name__ == "__main__":
             print("All required environment variables are set.")
 
     """ Options for user interaction """
+    print("Before continuing, please make sure Google Drive is running in the background.")
+    time.sleep(2)
     print("What step would you like to do? \n1. Generate link for participant & save token \n2. Get single user steps for a certain range \n3. Extract all users data to a CSV file from a date range \n4. Extract all users data according to the study period \n5. Delete a user \n6. Get sleep data over the study period\n7. Get activity data over the study period\n8. Send test message\n9. Update environment variable\n10. Exit")
 
     option = input("Enter the number of the option you want to execute: ")
