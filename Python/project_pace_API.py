@@ -71,7 +71,7 @@ if __name__ == "__main__":
             auth_link = auth.get_auth_link()
             print(f"\nGive this link to participant {user_id}:")
             print(auth_link)
-            link_code = input("\nInput URL that the participant recieved: ")
+            link_code = input("\nInput URL that the participant received: ")
             parsed_url = urlparse(link_code)
             code = parse_qs(parsed_url.query)['code'][0]
             auth.save_token_from_code(user_id, code)
