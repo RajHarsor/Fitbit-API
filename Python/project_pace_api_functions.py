@@ -705,3 +705,56 @@ def send_test_message():
         PhoneNumber=response['Item']['phone_number'],
         Message=message
     )
+
+def edit_user_study_info():
+    '''
+    Edit a single study information variable for a user
+
+    Returns:
+        None
+    '''
+    
+    user_id = input("Enter the participant ID you want to edit: ")
+    
+    # Print current study information for the user
+    paf = FitbitAuthSimple()
+    all_info = paf._load_all_info()
+    if user_id in all_info:
+        print(f"Current study information for user {user_id}:")
+        print(json.dumps(all_info[user_id], indent=4))
+    else:
+        print(f"No user found with ID {user_id}. Please check the participant ID and try again.")
+        return
+    
+    print("Which study information variable would you like to edit?")
+    print("1. Wave Number\n2. Study Start Date\n3. Study End Date\n4. Phone Number\n5. Morning Send Time\n6. Evening Send Time")
+    choice = input("Enter the number of your choice: ")
+    match choice:
+        case "1":
+            study_info = "wave_number"
+        case "2":
+            study_info = "study_start_date"
+        case "3":
+            study_info = "study_end_date"
+        case "4":
+            study_info = "phone_number"
+        case "5":
+            study_info = "morning_send_time"
+        case "6":
+            study_info = "evening_send_time"
+        case _:
+            print("Invalid choice")
+            return
+        
+    new_value = input(f"Enter the new value for {study_info}: ")
+
+    # Load existing info
+    all_info = paf._load_all_info()
+    if user_id in all_info:
+        all_info[user_id][study_info] = new_value
+        # Save updated info
+        with open(paf.info_file, 'w') as f:
+            json.dump(all_info, f)
+        print(f"Updated {study_info} for user {user_id} to {new_value}.")
+    else:
+        print(f"No user found with ID {user_id}. Please check the participant ID and try again.")
