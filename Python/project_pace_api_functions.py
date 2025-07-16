@@ -760,3 +760,23 @@ def edit_user_study_info():
         print(f"No user found with ID {user_id}. Please check the participant ID and try again.")
     
     #TODO: Add the option to update the user in AWS DynamoDB as well
+    
+    # Update user in AWS DynamoDB
+    Session = boto3.Session(
+        aws_access_key_id=paf.aws_access_key_id,
+        aws_secret_access_key=paf.aws_secret_access_key,
+        region_name=paf.region_name
+    )
+    
+    dynamodb = Session.resource("dynamodb")
+    table = dynamodb.Table(paf.aws_table_name)
+    
+    try:
+        table.update_item(
+            Key={'participant_id': user_id},
+            UpdateExpression=f"SET {study_info} = :val",
+            ExpressionAttributeValues={':val': new_value}
+        )
+        print(f"Updated {study_info} for user {user_id} in AWS DynamoDB to {new_value}.")
+    except Exception as e:
+        print(f"Error updating user {user_id} in AWS DynamoDB: {e}")
