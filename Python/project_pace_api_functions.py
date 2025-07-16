@@ -758,3 +758,5 @@ def edit_user_study_info():
         print(f"Updated {study_info} for user {user_id} to {new_value}.")
     else:
         print(f"No user found with ID {user_id}. Please check the participant ID and try again.")
+    
+    #TODO: Add the option to update the user in AWS DynamoDB as well
