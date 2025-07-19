@@ -8,8 +8,7 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qs
 import project_pace_api_functions as paf
 import time
-# %%
-# Usage
+# %% 
 if __name__ == "__main__":
     auth = paf.FitbitAuthSimple()
 
