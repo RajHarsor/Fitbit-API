@@ -5,8 +5,10 @@ import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
 import boto3
+import logging
 
-# TODO: Add logging functionality to track errors and user actions
+# Initialize logging
+logging.basicConfig(filename='project_pace_api.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # %%
 class FitbitAuthSimple:
@@ -31,6 +33,8 @@ class FitbitAuthSimple:
         Returns:
             str: The authorization URL that the user should visit to authorize the application
         """
+        logging.info("get_auth_link called to generate authorization URL")
+        
         client = fitbit.Fitbit(
             self.client_id,
             self.client_secret,
@@ -40,6 +44,7 @@ class FitbitAuthSimple:
         url, _ = client.client.authorize_token_url(
             scope=['activity', 'sleep']
         )
+        logging.info(f"Generated authorization URL: {url}. Option 1 in the main script.")
         return url
         
 
@@ -53,6 +58,7 @@ class FitbitAuthSimple:
         Returns:
             dict: The access token and refresh token for the user
         """
+        logging.info(f"save_token_from_code called for user {user_id} with auth code: {auth_code}")
         client = fitbit.Fitbit(
             self.client_id,
             self.client_secret,
@@ -60,6 +66,7 @@ class FitbitAuthSimple:
             oauth2=True
         )
         tokens = client.client.fetch_access_token(auth_code)
+        logging.info(f"Tokens received for user {user_id}: {tokens}")
         #self._save_tokens(user_id, tokens) # Only using this when saving the tokens to a file
         
         # Unravel the tokens so the information can be saved to AWS dynamoDB
@@ -111,6 +118,7 @@ class FitbitAuthSimple:
             'user_id': token_user_id
                 })
         print(f"User {user_id} authorized and information saved.")
+        logging.info(f"User {user_id} authorized and information saved to DynamoDB.")
         return tokens
 
     def _save_tokens_to_dynamodb(self, participant_id, tokens):
@@ -120,6 +128,7 @@ class FitbitAuthSimple:
             participant_id (str): The ID of the participant
             tokens (dict): The refreshed tokens
         """
+        logging.info(f"_save_tokens_to_dynamodb called for participant {participant_id} with tokens: {tokens}")
         Session = boto3.Session(
             aws_access_key_id=self.aws_access_key_id,
             aws_secret_access_key=self.aws_secret_access_key,
@@ -144,6 +153,7 @@ class FitbitAuthSimple:
             }
         )
         print(f"Tokens for participant {participant_id} updated in DynamoDB.")
+        logging.info(f"Tokens with following information {tokens} for participant {participant_id} updated in DynamoDB.")
 
     def delete_user(self, participant_id):
         """Delete user from both JSON files
@@ -151,6 +161,7 @@ class FitbitAuthSimple:
         Args:
             user_id (str): The ID of the user
         """
+        logging.info(f"delete_user called for participant {participant_id}")
 
         # Delete user from AWS DynamoDB
         Session = boto3.Session(
@@ -164,8 +175,10 @@ class FitbitAuthSimple:
         try:
             table.delete_item(Key={'participant_id': participant_id})
             print(f"Deleted participant {participant_id} from AWS DynamoDB.")
+            logging.info(f"Deleted participant {participant_id} from AWS DynamoDB.")
         except Exception as e:
             print(f"Error deleting participant {participant_id} from AWS DynamoDB: {e}")
+            logging.error(f"Error deleting participant {participant_id} from AWS DynamoDB: {e}")
 
     def get_user_steps(self, participant_id, start_date, end_date=None):
         """Get steps data for a user between two dates
@@ -181,6 +194,7 @@ class FitbitAuthSimple:
         Returns:
             dict: Steps data for the user between the specified dates
         """
+        logging.info(f"get_user_steps called for participant {participant_id} from {start_date} to {end_date}")
         # Get tokens for the user through DynamoDB
         Session = boto3.Session(
             aws_access_key_id=self.aws_access_key_id,
@@ -193,8 +207,10 @@ class FitbitAuthSimple:
 
         response = table.get_item(Key={'participant_id': participant_id})
         tokens = response.get('Item')
+        logging.info(f"Retrieved tokens for participant {participant_id}: {tokens}")
 
         if not tokens:
+            logging.error(f"No tokens found for participant {participant_id}")
             raise ValueError(f"No tokens found for participant {participant_id}")
 
         client = fitbit.Fitbit(
@@ -217,6 +233,7 @@ class FitbitAuthSimple:
                                         period='1d')
         except Exception as e:
             print(f"Error fetching steps: {e}")
+            logging.error(f"Error fetching steps for participant {participant_id}: {e}")
             return None
 
     def extract_all_users_steps_over_date_range(self, start_date, end_date):
@@ -230,6 +247,7 @@ class FitbitAuthSimple:
             pd.DataFrame: A DataFrame containing steps data for all users between the specified dates
 
         """
+        logging.info(f"extract_all_users_steps_over_date_range called from {start_date} to {end_date}")
         # Read DynamoDB table
         Session = boto3.Session(
             aws_access_key_id=self.aws_access_key_id,
@@ -242,6 +260,7 @@ class FitbitAuthSimple:
 
         response = table.scan()
         all_users_data = {item['participant_id']: item for item in response.get('Items', [])}
+        logging.info(f"Retrieved all users data from DynamoDB: {all_users_data}")
 
         # Lists to store data
         all_data = []
@@ -252,16 +271,20 @@ class FitbitAuthSimple:
 
         # Debug print
         print(f"Extracting data from {start_date} to {end_date}")
+        logging.info(f"Extracting data from {start_date} to {end_date}")
 
         # Loop through each user
         for participant_id in all_users_data.items():
             print(f"Processing participant: {participant_id}")
+            logging.info(f"Processing participant: {participant_id}")
             # Get access and refresh tokens through the scan
             participant_access_token = all_users_data[participant_id].get('access_token')
             participant_refresh_token = all_users_data[participant_id].get('refresh_token')
+            logging.info(f"Retrieved tokens for participant {participant_id}: {participant_access_token}, {participant_refresh_token}")
 
             if not participant_access_token or not participant_refresh_token:
                 print(f"No tokens found for participant {participant_id}")
+                logging.warning(f"No tokens found for participant {participant_id}")
                 continue
 
             client = fitbit.Fitbit(
@@ -285,8 +308,10 @@ class FitbitAuthSimple:
                         })
                     # Debug print
                     print(f"User: {participant_id}, Date: {day['dateTime']}, Steps: {day['value']}")
+                    logging.info(f"User: {participant_id}, Date: {day['dateTime']}, Steps: {day['value']}")
             except Exception as e:
                 print(f"Error retrieving data for user {participant_id}: {e}")
+                logging.error(f"Error retrieving data for user {participant_id}: {e}")
 
         # Get current date and time for the filename
         current_time = datetime.now().strftime("%Y%m%d_%H%M")
@@ -297,9 +322,11 @@ class FitbitAuthSimple:
             output_file = f'steps_data_{start_date}_to_{end_date}_{current_time}.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
+            logging.info(f"Data exported to {output_file}")
             return df
         else:
             print("No data found for the specified date range")
+            logging.warning("No data found for the specified date range")
             return None
 
     def extract_all_users_steps_study_period(self):
@@ -310,6 +337,7 @@ class FitbitAuthSimple:
             pd.DataFrame: A DataFrame containing steps data for all users according to the study period
         """
 
+        logging.info("extract_all_users_steps_study_period called to extract steps data for all users according to the study period")
         # Get information from dynamoDB
         Session = boto3.Session(
             aws_access_key_id=self.aws_access_key_id,
@@ -322,6 +350,7 @@ class FitbitAuthSimple:
 
         response = table.scan()
         all_users_data = {item['participant_id']: item for item in response.get('Items', [])}
+        logging.info(f"Retrieved all users data from DynamoDB: {all_users_data}")
 
         # Lists to store data
         all_data = []
@@ -331,9 +360,11 @@ class FitbitAuthSimple:
             print(f"Processing user: {participant_id}")
             user_access_token = user_data.get('access_token')
             user_refresh_token = user_data.get('refresh_token')
+            logging.info(f"Retrieved tokens for user {participant_id}: {user_access_token}, {user_refresh_token}")
 
             if not user_access_token or not user_refresh_token:
                 print(f"No tokens found for user {participant_id}")
+                logging.error(f"No tokens found for user {participant_id}")
                 continue
 
             client = fitbit.Fitbit(
@@ -361,8 +392,10 @@ class FitbitAuthSimple:
                     })
                     # Debug print
                     print(f"User: {participant_id}, Date: {day['dateTime']}, Steps: {day['value']}")
+                    logging.info(f"User: {participant_id}, Date: {day['dateTime']}, Steps: {day['value']}")
             except Exception as e:
                 print(f"Error retrieving data for user {participant_id}: {e}")
+                logging.error(f"Error retrieving data for user {participant_id}: {e}")
 
         # Get current date and time for the filename
         current_time = datetime.now().strftime("%Y%m%d_%H%M")
@@ -374,9 +407,11 @@ class FitbitAuthSimple:
             output_file = f'steps_data_study_period_{current_time}.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
+            logging.info(f"Data exported to {output_file}")
             return df
         else:
             print("No data found for the specified date range")
+            logging.warning("No data found for the specified date range")
             return None
 
     def extract_all_users_sleepData_study_period(self):
@@ -385,6 +420,7 @@ class FitbitAuthSimple:
         Returns:
             pd.DataFrame: A DataFrame containing sleep data for all users according to the study period
         """
+        logging.info("extract_all_users_sleepData_study_period called to extract sleep data for all users according to the study period")
         # Read dynamoDB table
         Session = boto3.Session(
             aws_access_key_id=self.aws_access_key_id,
@@ -397,6 +433,7 @@ class FitbitAuthSimple:
 
         response = table.scan()
         all_users_data = {item['participant_id']: item for item in response.get('Items', [])}
+        logging.info(f"Retrieved all users data from DynamoDB: {all_users_data}")
 
         # Lists to store data
         all_data = []
@@ -404,8 +441,10 @@ class FitbitAuthSimple:
         # Loop through each user
         for participant_id, user_data in all_users_data.items():
             print(f"Processing user: {participant_id}")
+            logging.info(f"Processing user: {participant_id}")
             if not user_data:
                 print(f"No tokens found for user {participant_id}")
+                logging.error(f"No tokens found for user {participant_id}")
                 continue
 
             client = fitbit.Fitbit(
@@ -448,9 +487,11 @@ class FitbitAuthSimple:
                     })
                     # Debug print
                     print(f"User: {participant_id}, Date: {day['dateOfSleep']}, Duration: {duration}, Efficiency: {efficiency}, isMainSleep: {is_main_sleep}, logType: {logType}, startTime: {startTime}")
+                    logging.info(f"User: {participant_id}, Date: {day['dateOfSleep']}, Duration: {duration}, Efficiency: {efficiency}, isMainSleep: {is_main_sleep}, logType: {logType}, startTime: {startTime}")
             except Exception as e:
                 print(f"Error retrieving data for user {participant_id}: {e}")
-        
+                logging.error(f"Error retrieving data for user {participant_id}: {e}")
+
         # Create DataFrame
         if all_data:
             df = pd.DataFrame(all_data)
@@ -462,6 +503,7 @@ class FitbitAuthSimple:
             output_file = f'sleep_data_study_period_{current_time}.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
+            logging.info(f"Data exported to {output_file}")
             return df
 
     def extract_all_users_activity_study_period(self):
@@ -470,10 +512,18 @@ class FitbitAuthSimple:
         Returns:
             pd.DataFrame: A DataFrame containing activity data for all users according to the study period
         """
-
-        # Read JSON file
-        with open(self.info_file, 'r') as file:
-            all_users_data = json.load(file)
+        logging.info("extract_all_users_activity_study_period called to extract activity data for all users according to the study period")
+        # Access AWS DynamoDB to get all users data
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.region_name
+        )
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table(self.aws_table_name)
+        response = table.scan()
+        all_users_data = {item['user_id']: item for item in response['Items']}
+        logging.info(f"Retrieved all users data from DynamoDB: {all_users_data}")
 
         # Lists to store data
         all_data = []
@@ -481,16 +531,20 @@ class FitbitAuthSimple:
         # Loop through each user
         for user_id, user_data in all_users_data.items():
             print(f"Processing user: {user_id}")
-            tokens = self._load_all_tokens().get(user_id)
-            if not tokens:
+            # Get tokens for the user through the scan
+            access_tokens = all_users_data[user_id].get('access_tokens')
+            refresh_tokens = all_users_data[user_id].get('refresh_tokens')
+            logging.info(f"Retrieved tokens for user {user_id}: {access_tokens}, {refresh_tokens}")
+            if not access_tokens:
                 print(f"No tokens found for user {user_id}")
+                logging.error(f"No tokens found for user {user_id}")
                 continue
 
             client = fitbit.Fitbit(
                 self.client_id,
                 self.client_secret,
-                access_token=tokens['access_token'],
-                refresh_token=tokens['refresh_token'],
+                access_token=access_tokens['access_token'],
+                refresh_token=refresh_tokens['refresh_token'],
                 refresh_cb=lambda token: self._save_tokens(user_id, token),
                 oauth2=True
             )
@@ -525,6 +579,7 @@ class FitbitAuthSimple:
                 all_data.extend(rows)
             except Exception as e:
                 print(f"Error retrieving data for user {user_id}: {e}")
+                logging.error(f"Error retrieving data for user {user_id}: {e}")
             
         # Create DataFrame
         if all_data:
@@ -540,10 +595,13 @@ class FitbitAuthSimple:
             output_file = f'activity_data_study_period.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
-            print(all_data)
+            logging.info(f"Data exported to {output_file}")
+            logging.info(f"All activity data: {all_data}")
+            logging.info(f"Dataframe: {df}")
             return df
         else:
             print("No data found for the specified date range")
+            logging.warning("No data found for the specified date range")
             return None
 
 
@@ -555,6 +613,7 @@ def check_env_file_exists() -> bool:
     Returns:
         bool: True if the .env file exists, False otherwise
     """
+    logging.info("check_env_file_exists called to check if .env file exists")
     load_dotenv()
     return os.path.exists('.env')
 
@@ -565,6 +624,7 @@ def check_env_variables() -> tuple[bool, str]:
         tuple[bool, str]: A tuple containing a boolean indicating if all variables are set,
                         and a string with the names of any missing variables
     """
+    logging.info("check_env_variables called to check if all required environment variables are set")
     current_dir = os.getcwd()
     
     # Read the .env file firectly to check for variables
@@ -577,6 +637,7 @@ def check_env_variables() -> tuple[bool, str]:
                     key, value = line.split('=', 1)
                     env_vars[key.strip()] = value.strip()
     except Exception as e:
+        logging.error(f"Error reading .env file: {e}")
         return False, f"Error reading .env file: {e}"
     
     required_vars = [
@@ -595,8 +656,10 @@ def check_env_variables() -> tuple[bool, str]:
             missing_vars.append(var)
     
     if missing_vars:
+        logging.warning(f"Missing environment variables: {', '.join(missing_vars)}")
         return False, f"{', '.join(missing_vars)}"
     else:
+        logging.info("All required environment variables are set.")
         return True, "All required environment variables are set."
 
 def create_env_file(fitbit_client_id: str,
@@ -665,10 +728,13 @@ def update_env_file():
             for line in lines:
                 if line.startswith(env_var_name):
                     f.write(f"{env_var_name}={new_value}\n")
+                    logging.info(f"Updated {env_var_name} in .env file")
                 else:
                     f.write(line)
+                    logging.info(f"Kept existing line in .env file: {line.strip()}")
     except Exception as e:
         print(f"Error updating .env file: {e}")
+        logging.error(f"Error updating .env file: {e}")
 
 def send_test_message():
     """Send a test message to the specified phone number using AWS SNS
@@ -679,8 +745,10 @@ def send_test_message():
     Returns:
         None
     """
+    logging.info("send_test_message called to send a test message to a user")
     user_id = input("Enter the participant ID you want to send a message to: ")
     message = input("Enter the message you want to send: ")
+    logging.info(f"Sending {message} to user {user_id}")
 
     # Initialize dynamoDB client
     Session = boto3.Session(
@@ -697,17 +765,25 @@ def send_test_message():
     # Print the phone number
     if 'Item' in response:
         print(f"Sending message to user {user_id} with phone number {response['Item']['phone_number']}")
+        logging.info(f"Sending message to user {user_id} with phone number {response['Item']['phone_number']}")
     if 'Item' not in response:
         print(f"No user found with ID {user_id}")
+        logging.warning(f"No user found with ID {user_id}")
         return
     
     sns = Session.client('sns')
 
     # Send the test message
-    sns.publish(
-        PhoneNumber=response['Item']['phone_number'],
-        Message=message
-    )
+    try:
+        sns.publish(
+            PhoneNumber=response['Item']['phone_number'],
+            Message=message
+        )
+        logging.info(f"Message sent to user {user_id}: {message}")
+    except Exception as e:
+        print(f"Error sending message to user {user_id}: {e}")
+        logging.error(f"Error sending message to user {user_id}: {e}")
+    
 
 def edit_user_study_info():
     '''
@@ -731,11 +807,15 @@ def edit_user_study_info():
     # Get the user's study information from the DynamoDB table
     response = table.get_item(Key={'participant_id': participant_id})
     all_info = response.get('Item', {})
-    
+    logging.info(f"Retrieved study information for user {participant_id}: {all_info}")
+
     if participant_id in all_info:
         print(f"Current study information for user {participant_id}:")
+        for key, value in all_info.items():
+            print(f"  {key}: {value}")
     else:
         print(f"No user found with ID {participant_id}. Please check the participant ID and try again.")
+        logging.warning(f"No user found with ID {participant_id}. Please check the participant ID and try again.")
         return
     
     print("Which study information variable would you like to edit?")
@@ -759,6 +839,7 @@ def edit_user_study_info():
             return
         
     new_value = input(f"Enter the new value for {study_info}: ")
+    logging.info(f"Updating {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
     
     try:
         table.update_item(
@@ -767,5 +848,7 @@ def edit_user_study_info():
             ExpressionAttributeValues={':val': new_value}
         )
         print(f"Updated {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
+        logging.info(f"Updated {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
     except Exception as e:
         print(f"Error updating user {participant_id} in AWS DynamoDB: {e}")
+        logging.error(f"Error updating user {participant_id} in AWS DynamoDB: {e}")
