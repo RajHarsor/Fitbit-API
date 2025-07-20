@@ -8,14 +8,8 @@ import boto3
 import logging
 
 # Initialize logging
-logging.basicConfig(filename='project_pace_api.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='project_pace_api.log', format='%(asctime)s - %(levelname)s - %(message)s')
 
-load_dotenv()
-client_id = os.getenv('FITBIT_CLIENT_ID')
-client_secret = os.getenv('FITBIT_CLIENT_SECRET')
-aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
-aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
-aws_region_name = "us-east-1"
 
 # %%
 class FitbitAuthSimple:
@@ -612,250 +606,248 @@ class FitbitAuthSimple:
             return None
 
 
-"""NEW METHODS FOR V2.0"""
+    def check_env_file_exists(self) -> bool:
+        """Check if the .env file exists in the current directory
 
-def check_env_file_exists() -> bool:
-    """Check if the .env file exists in the current directory
+        Returns:
+            bool: True if the .env file exists, False otherwise
+        """
+        logging.info("check_env_file_exists called to check if .env file exists")
+        load_dotenv()
+        return os.path.exists('.env')
 
-    Returns:
-        bool: True if the .env file exists, False otherwise
-    """
-    logging.info("check_env_file_exists called to check if .env file exists")
-    load_dotenv()
-    return os.path.exists('.env')
+    def check_env_variables(self) -> tuple[bool, str]:
+        """Check if all required environment variables are set
 
-def check_env_variables() -> tuple[bool, str]:
-    """Check if all required environment variables are set
-
-    Returns:
-        tuple[bool, str]: A tuple containing a boolean indicating if all variables are set,
-                        and a string with the names of any missing variables
-    """
-    logging.info("check_env_variables called to check if all required environment variables are set")
-    current_dir = os.getcwd()
-    
-    # Read the .env file firectly to check for variables
-    env_vars = {}
-    try:
-        with open('.env', 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    env_vars[key.strip()] = value.strip()
-    except Exception as e:
-        logging.error(f"Error reading .env file: {e}")
-        return False, f"Error reading .env file: {e}"
-    
-    required_vars = [
-        'FITBIT_CLIENT_ID',
-        'FITBIT_CLIENT_SECRET',
-        'FITBIT_CALLBACK_URL',
-        'AWS_ACCESS_KEY_ID',
-        'AWS_SECRET_ACCESS_KEY',
-        'AWS_REGION',
-        'AWS_TABLE_NAME'
-    ]
-    
-    missing_vars = []
-    for var in required_vars:
-        if var not in env_vars or not env_vars[var]:
-            missing_vars.append(var)
-    
-    if missing_vars:
-        logging.warning(f"Missing environment variables: {', '.join(missing_vars)}")
-        return False, f"{', '.join(missing_vars)}"
-    else:
-        logging.info("All required environment variables are set.")
-        return True, "All required environment variables are set."
-
-def create_env_file(fitbit_client_id: str,
-                    fitbit_client_secret: str,
-                    aws_access_key_id: str,
-                    aws_secret_access_key: str):
-    """Create a .env file with the provided environment variables
-
-    Args:
-        fitbit_client_id (str): Fitbit client ID
-        fitbit_client_secret (str): Fitbit client secret
-        aws_access_key_id (str): AWS access key ID
-        aws_secret_access_key (str): AWS secret access key
+        Returns:
+            tuple[bool, str]: A tuple containing a boolean indicating if all variables are set,
+                            and a string with the names of any missing variables
+        """
+        logging.info("check_env_variables called to check if all required environment variables are set")
+        current_dir = os.getcwd()
         
-    Returns:
-        None
-    """
-    with open('.env', 'w') as f:
-        f.write(f"FITBIT_CLIENT_ID={fitbit_client_id}\n")
-        f.write(f"FITBIT_CLIENT_SECRET={fitbit_client_secret}\n")
-        f.write(f"FITBIT_CALLBACK_URL=https://drarigo.wordpress.com\n")
-        f.write(f"AWS_ACCESS_KEY_ID={aws_access_key_id}\n")
-        f.write(f"AWS_SECRET_ACCESS_KEY={aws_secret_access_key}\n")
-        f.write(f"AWS_REGION=us-east-1\n")
-        f.write(f"AWS_TABLE_NAME=PACE_Participants\n")
+        # Read the .env file firectly to check for variables
+        env_vars = {}
+        try:
+            with open('.env', 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        env_vars[key.strip()] = value.strip()
+        except Exception as e:
+            logging.error(f"Error reading .env file: {e}")
+            return False, f"Error reading .env file: {e}"
+        
+        required_vars = [
+            'FITBIT_CLIENT_ID',
+            'FITBIT_CLIENT_SECRET',
+            'FITBIT_CALLBACK_URL',
+            'AWS_ACCESS_KEY_ID',
+            'AWS_SECRET_ACCESS_KEY',
+            'AWS_REGION',
+            'AWS_TABLE_NAME'
+        ]
+        
+        missing_vars = []
+        for var in required_vars:
+            if var not in env_vars or not env_vars[var]:
+                missing_vars.append(var)
+        
+        if missing_vars:
+            logging.warning(f"Missing environment variables: {', '.join(missing_vars)}")
+            return False, f"{', '.join(missing_vars)}"
+        else:
+            logging.info("All required environment variables are set.")
+            return True, "All required environment variables are set."
 
-def update_env_file():
-    """Updates one of the .env file with new environment variables
+    def create_env_file(self, fitbit_client_id: str,
+                        fitbit_client_secret: str,
+                        aws_access_key_id: str,
+                        aws_secret_access_key: str):
+        """Create a .env file with the provided environment variables
 
-    Returns:
-        None
-    """
-    # Make the user choose which variable to update
-    print("Which environment variable would you like to update?")
-    print("1. FITBIT_CLIENT_ID\n2. FITBIT_CLIENT_SECRET\n3. TOKENS_PATH\n4. INFO_PATH\n5. AWS_ACCESS_KEY_ID\n6. AWS_SECRET_ACCESS_KEY\n7. AWS_REGION\n8. AWS_TABLE_NAME")
+        Args:
+            fitbit_client_id (str): Fitbit client ID
+            fitbit_client_secret (str): Fitbit client secret
+            aws_access_key_id (str): AWS access key ID
+            aws_secret_access_key (str): AWS secret access key
+            
+        Returns:
+            None
+        """
+        with open('.env', 'w') as f:
+            f.write(f"FITBIT_CLIENT_ID={fitbit_client_id}\n")
+            f.write(f"FITBIT_CLIENT_SECRET={fitbit_client_secret}\n")
+            f.write(f"FITBIT_CALLBACK_URL=https://drarigo.wordpress.com\n")
+            f.write(f"AWS_ACCESS_KEY_ID={aws_access_key_id}\n")
+            f.write(f"AWS_SECRET_ACCESS_KEY={aws_secret_access_key}\n")
+            f.write(f"AWS_REGION=us-east-1\n")
+            f.write(f"AWS_TABLE_NAME=PACE_Participants\n")
 
-    choice = input("Enter the number of your choice: ")
-    env_var_name = ""
-    match choice:
-        case "1":
-            env_var_name = "FITBIT_CLIENT_ID"
-        case "2":
-            env_var_name = "FITBIT_CLIENT_SECRET"
-        case "3":
-            env_var_name = "AWS_ACCESS_KEY_ID"
-        case "4":
-            env_var_name = "AWS_SECRET_ACCESS_KEY"
-        case "5":
-            env_var_name = "AWS_REGION"
-        case "6":
-            env_var_name = "AWS_TABLE_NAME"
-        case _:
-            print("Invalid choice")
-            return
+    def update_env_file(self):
+        """Updates one of the .env file with new environment variables
 
-    new_value = input(f"Enter the new value for {env_var_name}: ")
+        Returns:
+            None
+        """
+        # Make the user choose which variable to update
+        print("Which environment variable would you like to update?")
+        print("1. FITBIT_CLIENT_ID\n2. FITBIT_CLIENT_SECRET\n3. TOKENS_PATH\n4. INFO_PATH\n5. AWS_ACCESS_KEY_ID\n6. AWS_SECRET_ACCESS_KEY\n7. AWS_REGION\n8. AWS_TABLE_NAME")
 
-    # Update the .env file
-    current_dir = os.getcwd()
-    env_file_path = os.path.join(current_dir, '.env')
+        choice = input("Enter the number of your choice: ")
+        env_var_name = ""
+        match choice:
+            case "1":
+                env_var_name = "FITBIT_CLIENT_ID"
+            case "2":
+                env_var_name = "FITBIT_CLIENT_SECRET"
+            case "3":
+                env_var_name = "AWS_ACCESS_KEY_ID"
+            case "4":
+                env_var_name = "AWS_SECRET_ACCESS_KEY"
+            case "5":
+                env_var_name = "AWS_REGION"
+            case "6":
+                env_var_name = "AWS_TABLE_NAME"
+            case _:
+                print("Invalid choice")
+                return
 
-    try:
-        with open(env_file_path, 'r') as f:
-            lines = f.readlines()
-        with open(env_file_path, 'w') as f:
-            for line in lines:
-                if line.startswith(env_var_name):
-                    f.write(f"{env_var_name}={new_value}\n")
-                    logging.info(f"Updated {env_var_name} in .env file")
-                else:
-                    f.write(line)
-                    logging.info(f"Kept existing line in .env file: {line.strip()}")
-    except Exception as e:
-        print(f"Error updating .env file: {e}")
-        logging.error(f"Error updating .env file: {e}")
+        new_value = input(f"Enter the new value for {env_var_name}: ")
 
-def send_test_message():
-    """Send a test message to the specified phone number using AWS SNS
-    Args:
-        phone_number (str): The phone number to send the message to
-        message (str): The message to send
+        # Update the .env file
+        current_dir = os.getcwd()
+        env_file_path = os.path.join(current_dir, '.env')
 
-    Returns:
-        None
-    """
-    logging.info("send_test_message called to send a test message to a user")
-    user_id = input("Enter the participant ID you want to send a message to: ")
-    message = input("Enter the message you want to send: ")
-    logging.info(f"Sending {message} to user {user_id}")
+        try:
+            with open(env_file_path, 'r') as f:
+                lines = f.readlines()
+            with open(env_file_path, 'w') as f:
+                for line in lines:
+                    if line.startswith(env_var_name):
+                        f.write(f"{env_var_name}={new_value}\n")
+                        logging.info(f"Updated {env_var_name} in .env file")
+                    else:
+                        f.write(line)
+                        logging.info(f"Kept existing line in .env file: {line.strip()}")
+        except Exception as e:
+            print(f"Error updating .env file: {e}")
+            logging.error(f"Error updating .env file: {e}")
 
-    # Initialize dynamoDB client
-    Session = boto3.Session(
-        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-        region_name=os.getenv('AWS_REGION')
-    )
-    
-    dynamodb = Session.resource("dynamodb")
-    table = dynamodb.Table(os.getenv('AWS_TABLE_NAME'))
-    
-    # Get the user's phone number from the DynamoDB table
-    response = table.get_item(Key={'participant_id': user_id})
-    # Print the phone number
-    if 'Item' in response:
-        print(f"Sending message to user {user_id} with phone number {response['Item']['phone_number']}")
-        logging.info(f"Sending message to user {user_id} with phone number {response['Item']['phone_number']}")
-    if 'Item' not in response:
-        print(f"No user found with ID {user_id}")
-        logging.warning(f"No user found with ID {user_id}")
-        return
-    
-    sns = Session.client('sns')
+    def send_test_message(self):
+        """Send a test message to the specified phone number using AWS SNS
+        Args:
+            phone_number (str): The phone number to send the message to
+            message (str): The message to send
 
-    # Send the test message
-    try:
-        sns.publish(
-            PhoneNumber=response['Item']['phone_number'],
-            Message=message
+        Returns:
+            None
+        """
+        logging.info("send_test_message called to send a test message to a user")
+        user_id = input("Enter the participant ID you want to send a message to: ")
+        message = input("Enter the message you want to send: ")
+        logging.info(f"Sending {message} to user {user_id}")
+
+        # Initialize dynamoDB client
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.aws_region_name
         )
-        logging.info(f"Message sent to user {user_id}: {message}")
-    except Exception as e:
-        print(f"Error sending message to user {user_id}: {e}")
-        logging.error(f"Error sending message to user {user_id}: {e}")
-    
-
-def edit_user_study_info():
-    '''
-    Edit a single study information variable for a user
-
-    Returns:
-        None
-    '''
-    participant_id = input("Enter the participant ID you want to edit: ")
-    logging.info(f"Editing study information for user {participant_id}")
-    
-    # Print current study information for the user
-    Session = boto3.Session(
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-        region_name=aws_region_name
-    )
-    dynamodb = Session.resource("dynamodb")
-    table = dynamodb.Table(os.getenv('AWS_TABLE_NAME'))
-    
-    # Get the user's study information from the DynamoDB table
-    response = table.get_item(Key={'participant_id': participant_id})
-    all_info = response.get('Item', {})
-    logging.info(f"Retrieved study information for user {participant_id}: {all_info}")
-
-    if participant_id in all_info:
-        print(f"Current study information for user {participant_id}:")
-        for key, value in all_info.items():
-            print(f"  {key}: {value}")
-    else:
-        print(f"No user found with ID {participant_id}. Please check the participant ID and try again.")
-        logging.warning(f"No user found with ID {participant_id}. Please check the participant ID and try again.")
-        return
-    
-    print("Which study information variable would you like to edit?")
-    print("1. Wave Number\n2. Study Start Date\n3. Study End Date\n4. Phone Number\n5. Morning Send Time\n6. Evening Send Time")
-    choice = input("Enter the number of your choice: ")
-    match choice:
-        case "1":
-            study_info = "wave_number"
-        case "2":
-            study_info = "study_start_date"
-        case "3":
-            study_info = "study_end_date"
-        case "4":
-            study_info = "phone_number"
-        case "5":
-            study_info = "morning_send_time"
-        case "6":
-            study_info = "evening_send_time"
-        case _:
-            print("Invalid choice")
+        
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table(os.getenv('AWS_TABLE_NAME'))
+        
+        # Get the user's phone number from the DynamoDB table
+        response = table.get_item(Key={'participant_id': user_id})
+        # Print the phone number
+        if 'Item' in response:
+            print(f"Sending message to user {user_id} with phone number {response['Item']['phone_number']}")
+            logging.info(f"Sending message to user {user_id} with phone number {response['Item']['phone_number']}")
+        if 'Item' not in response:
+            print(f"No user found with ID {user_id}")
+            logging.warning(f"No user found with ID {user_id}")
             return
         
-    new_value = input(f"Enter the new value for {study_info}: ")
-    logging.info(f"Updating {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
-    
-    try:
-        table.update_item(
-            Key={'participant_id': participant_id},
-            UpdateExpression=f"SET {study_info} = :val",
-            ExpressionAttributeValues={':val': new_value}
+        sns = Session.client('sns')
+
+        # Send the test message
+        try:
+            sns.publish(
+                PhoneNumber=response['Item']['phone_number'],
+                Message=message
+            )
+            logging.info(f"Message sent to user {user_id}: {message}")
+        except Exception as e:
+            print(f"Error sending message to user {user_id}: {e}")
+            logging.error(f"Error sending message to user {user_id}: {e}")
+        
+
+    def edit_user_study_info(self):
+        '''
+        Edit a single study information variable for a user
+
+        Returns:
+            None
+        '''
+        participant_id = input("Enter the participant ID you want to edit: ")
+        logging.info(f"Editing study information for user {participant_id}")
+        
+        # Print current study information for the user
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.aws_region_name
         )
-        print(f"Updated {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
-        logging.info(f"Updated {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
-    except Exception as e:
-        print(f"Error updating user {participant_id} in AWS DynamoDB: {e}")
-        logging.error(f"Error updating user {participant_id} in AWS DynamoDB: {e}")
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table(os.getenv('AWS_TABLE_NAME'))
+        
+        # Get the user's study information from the DynamoDB table
+        response = table.get_item(Key={'participant_id': participant_id})
+        all_info = response.get('Item', {})
+        logging.info(f"Retrieved study information for user {participant_id}: {all_info}")
+
+        if participant_id in all_info:
+            print(f"Current study information for user {participant_id}:")
+            for key, value in all_info.items():
+                print(f"  {key}: {value}")
+        else:
+            print(f"No user found with ID {participant_id}. Please check the participant ID and try again.")
+            logging.warning(f"No user found with ID {participant_id}. Please check the participant ID and try again.")
+            return
+        
+        print("Which study information variable would you like to edit?")
+        print("1. Wave Number\n2. Study Start Date\n3. Study End Date\n4. Phone Number\n5. Morning Send Time\n6. Evening Send Time")
+        choice = input("Enter the number of your choice: ")
+        match choice:
+            case "1":
+                study_info = "wave_number"
+            case "2":
+                study_info = "study_start_date"
+            case "3":
+                study_info = "study_end_date"
+            case "4":
+                study_info = "phone_number"
+            case "5":
+                study_info = "morning_send_time"
+            case "6":
+                study_info = "evening_send_time"
+            case _:
+                print("Invalid choice")
+                return
+            
+        new_value = input(f"Enter the new value for {study_info}: ")
+        logging.info(f"Updating {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
+        
+        try:
+            table.update_item(
+                Key={'participant_id': participant_id},
+                UpdateExpression=f"SET {study_info} = :val",
+                ExpressionAttributeValues={':val': new_value}
+            )
+            print(f"Updated {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
+            logging.info(f"Updated {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
+        except Exception as e:
+            print(f"Error updating user {participant_id} in AWS DynamoDB: {e}")
+            logging.error(f"Error updating user {participant_id} in AWS DynamoDB: {e}")
