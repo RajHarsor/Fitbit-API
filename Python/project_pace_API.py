@@ -1,10 +1,6 @@
 # %%
-import os
-import json
-import fitbit
 import pandas as pd
 from datetime import datetime
-from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qs
 import project_pace_api_functions as paf
 import time
