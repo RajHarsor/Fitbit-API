@@ -809,7 +809,7 @@ class FitbitAuthSimple:
         all_info = response.get('Item', {})
         logging.info(f"Retrieved study information for user {participant_id}: {all_info}")
 
-        if participant_id in all_info:
+        if all_info is not None:
             print(f"Current study information for user {participant_id}:")
             for key, value in all_info.items():
                 print(f"  {key}: {value}")
