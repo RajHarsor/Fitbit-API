@@ -16,7 +16,7 @@ class FitbitAuthSimple:
     def __init__(self):
         load_dotenv()
         
-        ## Initialize Fitbit API credentials and file paths (Google Drive)
+        ## Initialize Fitbit API credentials 
         self.client_id = os.getenv('FITBIT_CLIENT_ID')
         self.client_secret = os.getenv('FITBIT_CLIENT_SECRET')
         # Use a dummy redirect URI - Fitbit will still show the code
