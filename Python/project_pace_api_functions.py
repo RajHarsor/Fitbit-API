@@ -800,6 +800,7 @@ class FitbitAuthSimple:
             aws_secret_access_key=self.aws_secret_access_key,
             region_name=self.region_name
         )
+        logging.info(f"access_key = ""{self.aws_access_key_id}, secret_key = {self.aws_secret_access_key}, region_name = {self.region_name}")
         dynamodb = Session.resource("dynamodb")
         table = dynamodb.Table(os.getenv('AWS_TABLE_NAME'))
         
