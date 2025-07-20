@@ -25,14 +25,10 @@ if __name__ == "__main__":
         # Prompt user for input
         fitbit_client_id = input("FITBIT_CLIENT_ID: ")
         fitbit_client_secret = input("FITBIT_CLIENT_SECRET: ")
-        tokens_path = input("TOKENS_PATH: ")
-        info_path = input("INFO_PATH: ")
         aws_access_key_id = input("AWS_ACCESS_KEY_ID: ")
         aws_secret_access_key = input("AWS_SECRET_ACCESS_KEY: ")
         paf.create_env_file(fitbit_client_id,
                             fitbit_client_secret,
-                            tokens_path=tokens_path,
-                            info_path=info_path,
                             aws_access_key_id=aws_access_key_id,
                             aws_secret_access_key=aws_secret_access_key)
         print("Created .env file. Reload the script to continue.")
