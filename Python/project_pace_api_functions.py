@@ -6,6 +6,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 import boto3
 
+# TODO: Add logging functionality to track errors and user actions
+
 # %%
 class FitbitAuthSimple:
     def __init__(self):

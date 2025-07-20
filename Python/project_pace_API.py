@@ -4,6 +4,8 @@ from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 import project_pace_api_functions as paf
 import time
+
+# TODO: Add logging functionality to track errors and user actions
 # %%
 if __name__ == "__main__":
     auth = paf.FitbitAuthSimple()
