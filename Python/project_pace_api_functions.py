@@ -18,8 +18,6 @@ class FitbitAuthSimple:
         self.client_secret = os.getenv('FITBIT_CLIENT_SECRET')
         # Use a dummy redirect URI - Fitbit will still show the code
         self.redirect_uri = os.getenv('FITBIT_REDIRECT_URI')
-        self.token_file = os.getenv('TOKENS_PATH')
-        self.info_file = os.getenv('INFO_PATH')
         
         ## Initialize AWS credentials
         self.aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
