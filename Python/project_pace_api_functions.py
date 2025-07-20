@@ -60,7 +60,16 @@ class FitbitAuthSimple:
             oauth2=True
         )
         tokens = client.client.fetch_access_token(auth_code)
-        self._save_tokens(user_id, tokens)
+        #self._save_tokens(user_id, tokens) # Only using this when saving the tokens to a file
+        
+        # Unravel the tokens so the information can be saved to AWS dynamoDB
+        access_token = tokens['access_token']
+        refresh_token = tokens['refresh_token']
+        expires_in = tokens['expires_in']
+        expires_at = tokens['expires_at']
+        scope = tokens['scope']
+        token_type = tokens['token_type']
+        token_user_id = tokens['user_id']
 
         # Prompt for additional information
         wave_number = input("Enter wave number: ")
@@ -71,7 +80,7 @@ class FitbitAuthSimple:
         evening_send_time = input("Enter evening send time IN MILITARY time (HH:MM): ")
 
         # Save additional information
-        self._save_user_info(user_id, wave_number, study_start_date, study_end_date, phone_number, morning_send_time, evening_send_time)
+        #self._save_user_info(user_id, wave_number, study_start_date, study_end_date, phone_number, morning_send_time, evening_send_time)
         
         # Send information to AWS dynamoDB
         
@@ -92,97 +101,57 @@ class FitbitAuthSimple:
             'study_end_date': study_end_date,
             'phone_number': phone_number,
             'morning_send_time': morning_send_time,
-            'evening_send_time': evening_send_time
-        })
+            'evening_send_time': evening_send_time,
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': expires_in,
+            'expires_at': expires_at,
+            'scope': scope,
+            'token_type': token_type,
+            'user_id': token_user_id
+                })
         print(f"User {user_id} authorized and information saved.")
         return tokens
 
-    def _save_tokens(self, user_id, tokens):
-        """Save access and refresh tokens for a user to JSON
+    def _save_tokens_to_dynamodb(self, participant_id, tokens):
+        """Save refreshed tokens to AWS DynamoDB
 
         Args:
-            user_id (str): The ID of the user
-            tokens (dict): The access token and refresh token for the user
+            participant_id (str): The ID of the participant
+            tokens (dict): The refreshed tokens
         """
-        all_tokens = self._load_all_tokens()
-        all_tokens[user_id] = tokens
-        with open(self.token_file, 'w') as f:
-            json.dump(all_tokens, f)
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.region_name
+        )
 
-    def _load_all_tokens(self):
-        """Load all access and refresh tokens from JSON
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table(self.aws_table_name)
 
-        Returns:
-            dict: A dictionary of user IDs and their corresponding tokens
-        """
-        try:
-            with open(self.token_file, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {}
+        # Update the item in DynamoDB
+        table.update_item(
+            Key={'participant_id': participant_id},
+            UpdateExpression="SET access_token = :access_token, refresh_token = :refresh_token, expires_in = :expires_in, expires_at = :expires_at, scope = :scope, token_type = :token_type, user_id = :user_id",
+            ExpressionAttributeValues={
+                ':access_token': tokens['access_token'],
+                ':refresh_token': tokens['refresh_token'],
+                ':expires_in': tokens['expires_in'],
+                ':expires_at': tokens['expires_at'],
+                ':scope': tokens['scope'],
+                ':token_type': tokens['token_type'],
+                ':user_id': tokens['user_id']
+            }
+        )
+        print(f"Tokens for participant {participant_id} updated in DynamoDB.")
 
-    def _load_all_info(self):
-        """Load all user information from JSON
-
-        Returns:
-            dict: A dictionary of user IDs and their corresponding information
-        """
-        try:
-            with open(self.info_file, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {}
-        except json.JSONDecodeError:
-            return {}
-
-    def _save_user_info(self, user_id, wave_number, study_start_date, study_end_date, phone_number, morning_send_time, evening_send_time):
-        """Save user information to JSON
-
-        Args:
-            user_id (str): The ID of the user
-            wave_number (str): The wave number
-            study_start_date (str): The study start date
-            study_end_date (str): The study end date
-        """
-        all_info = self._load_all_info()
-        all_info[user_id] = {
-            'wave_number': wave_number,
-            'study_start_date': study_start_date,
-            'study_end_date': study_end_date,
-            'phone_number': phone_number,
-            'morning_send_time': morning_send_time,
-            'evening_send_time': evening_send_time
-        }
-        with open(self.info_file, 'w') as f:
-            json.dump(all_info, f)
-    
-    def delete_user(self, user_id):
+    def delete_user(self, participant_id):
         """Delete user from both JSON files
 
         Args:
             user_id (str): The ID of the user
         """
-        # Load tokens and info
-        all_tokens = self._load_all_tokens()
-        all_info = self._load_all_info()
 
-        # Remove user if exists
-        if user_id in all_tokens:
-            del all_tokens[user_id]
-            with open(self.token_file, 'w') as f:
-                json.dump(all_tokens, f)
-            print(f"Deleted user {user_id} from tokens file.")
-        else:
-            print(f"User {user_id} not found in tokens file.")
-
-        if user_id in all_info:
-            del all_info[user_id]
-            with open(self.info_file, 'w') as f:
-                json.dump(all_info, f)
-            print(f"Deleted user {user_id} from info file.")
-        else:
-            print(f"User {user_id} not found in info file.")
-            
         # Delete user from AWS DynamoDB
         Session = boto3.Session(
             aws_access_key_id=self.aws_access_key_id,
@@ -193,16 +162,16 @@ class FitbitAuthSimple:
         table = dynamodb.Table(self.aws_table_name)
         
         try:
-            table.delete_item(Key={'participant_id': user_id})
-            print(f"Deleted user {user_id} from AWS DynamoDB.")
+            table.delete_item(Key={'participant_id': participant_id})
+            print(f"Deleted participant {participant_id} from AWS DynamoDB.")
         except Exception as e:
-            print(f"Error deleting user {user_id} from AWS DynamoDB: {e}")
+            print(f"Error deleting participant {participant_id} from AWS DynamoDB: {e}")
 
-    def get_user_steps(self, user_id, start_date, end_date=None):
+    def get_user_steps(self, participant_id, start_date, end_date=None):
         """Get steps data for a user between two dates
 
         Args:
-            user_id (str): The ID of the user
+            participant_id (str): The ID of the participant
             start_date (str): The start date in 'YYYY-MM-DD' format
             end_date (str, optional): The end date in 'YYYY-MM-DD' format. Defaults to None, which means the last 1 day will be used.
 
@@ -212,22 +181,34 @@ class FitbitAuthSimple:
         Returns:
             dict: Steps data for the user between the specified dates
         """
-        tokens = self._load_all_tokens().get(user_id)
+        # Get tokens for the user through DynamoDB
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.region_name
+        )
+
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table(self.aws_table_name)
+
+        response = table.get_item(Key={'participant_id': participant_id})
+        tokens = response.get('Item')
+
         if not tokens:
-            raise ValueError(f"No tokens found for user {user_id}")
+            raise ValueError(f"No tokens found for participant {participant_id}")
 
         client = fitbit.Fitbit(
             self.client_id,
             self.client_secret,
             access_token=tokens['access_token'],
             refresh_token=tokens['refresh_token'],
-            refresh_cb=lambda token: self._save_tokens(user_id, token),
+            refresh_cb=lambda token: self._save_tokens_to_dynamodb(participant_id, token),
             oauth2=True
         )
 
         try:
             if end_date:
-                return client.time_series('activities/steps', 
+                return client.time_series('activities/steps',
                                         base_date=start_date,
                                         end_date=end_date)
             else:
@@ -238,23 +219,29 @@ class FitbitAuthSimple:
             print(f"Error fetching steps: {e}")
             return None
 
-    def extract_all_users_steps(self, json_file_path, start_date, end_date):
+    def extract_all_users_steps_over_date_range(self, start_date, end_date):
         """Extract steps data for all users between two dates
 
         Args:
-            json_file_path (str): The path to the JSON file containing user data
             start_date (str): The start date in 'YYYY-MM-DD' format
             end_date (str): The end date in 'YYYY-MM-DD' format
         
         Returns:
             pd.DataFrame: A DataFrame containing steps data for all users between the specified dates
-        
-        Raises:
-            FileNotFoundError: If the JSON file does not exist
+
         """
-        # Read JSON file
-        with open(json_file_path, 'r') as file:
-            all_users_data = json.load(file)
+        # Read DynamoDB table
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.region_name
+        )
+
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table(self.aws_table_name)
+
+        response = table.scan()
+        all_users_data = {item['participant_id']: item for item in response.get('Items', [])}
 
         # Lists to store data
         all_data = []
@@ -267,19 +254,22 @@ class FitbitAuthSimple:
         print(f"Extracting data from {start_date} to {end_date}")
 
         # Loop through each user
-        for user_id, user_data in all_users_data.items():
-            print(f"Processing user: {user_id}")
-            tokens = self._load_all_tokens().get(user_id)
-            if not tokens:
-                print(f"No tokens found for user {user_id}")
+        for participant_id in all_users_data.items():
+            print(f"Processing participant: {participant_id}")
+            # Get access and refresh tokens through the scan
+            participant_access_token = all_users_data[participant_id].get('access_token')
+            participant_refresh_token = all_users_data[participant_id].get('refresh_token')
+
+            if not participant_access_token or not participant_refresh_token:
+                print(f"No tokens found for participant {participant_id}")
                 continue
 
             client = fitbit.Fitbit(
                 self.client_id,
                 self.client_secret,
-                access_token=tokens['access_token'],
-                refresh_token=tokens['refresh_token'],
-                refresh_cb=lambda token: self._save_tokens(user_id, token),
+                access_token=participant_access_token,
+                refresh_token=participant_refresh_token,
+                refresh_cb=lambda token: self._save_tokens_to_dynamodb(participant_id, token),
                 oauth2=True
             )
 
@@ -289,19 +279,22 @@ class FitbitAuthSimple:
                     date = datetime.strptime(day['dateTime'], '%Y-%m-%d')
                     if start <= date <= end:
                         all_data.append({
-                            'user_id': user_id,
+                            'user_id': participant_id,
                             'date': day['dateTime'],
                             'steps': int(day['value'])
                         })
                     # Debug print
-                    print(f"User: {user_id}, Date: {day['dateTime']}, Steps: {day['value']}")
+                    print(f"User: {participant_id}, Date: {day['dateTime']}, Steps: {day['value']}")
             except Exception as e:
-                print(f"Error retrieving data for user {user_id}: {e}")
+                print(f"Error retrieving data for user {participant_id}: {e}")
+
+        # Get current date and time for the filename
+        current_time = datetime.now().strftime("%Y%m%d_%H%M")
 
         # Create DataFrame
         if all_data:
             df = pd.DataFrame(all_data)
-            output_file = f'steps_data_{start_date}_to_{end_date}.csv'
+            output_file = f'steps_data_{start_date}_to_{end_date}_{current_time}.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
             return df
@@ -311,38 +304,49 @@ class FitbitAuthSimple:
 
     def extract_all_users_steps_study_period(self):
 
-        """Extract steps data for all users according to the study period defined in the info file
+        """Extract steps data for all users according to the study period defined in the dynamoDB table
 
         Returns:
             pd.DataFrame: A DataFrame containing steps data for all users according to the study period
         """
 
-        # Read JSON file
-        with open(self.info_file, 'r') as file:
-            all_users_data = json.load(file)
+        # Get information from dynamoDB
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.region_name
+        )
+
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table(self.aws_table_name)
+
+        response = table.scan()
+        all_users_data = {item['participant_id']: item for item in response.get('Items', [])}
 
         # Lists to store data
         all_data = []
 
         # Loop through each user
-        for user_id, user_data in all_users_data.items():
-            print(f"Processing user: {user_id}")
-            tokens = self._load_all_tokens().get(user_id)
-            if not tokens:
-                print(f"No tokens found for user {user_id}")
+        for participant_id, user_data in all_users_data.items():
+            print(f"Processing user: {participant_id}")
+            user_access_token = user_data.get('access_token')
+            user_refresh_token = user_data.get('refresh_token')
+
+            if not user_access_token or not user_refresh_token:
+                print(f"No tokens found for user {participant_id}")
                 continue
 
             client = fitbit.Fitbit(
                 self.client_id,
                 self.client_secret,
-                access_token=tokens['access_token'],
-                refresh_token=tokens['refresh_token'],
-                refresh_cb=lambda token: self._save_tokens(user_id, token),
+                access_token=user_access_token,
+                refresh_token=user_refresh_token,
+                refresh_cb=lambda token: self._save_tokens_to_dynamodb(participant_id, token),
                 oauth2=True
             )
 
             try:
-                steps_data = client.time_series('activities/steps', base_date=user_data['study_start_date'], end_date=user_data['study_end_date'])
+                steps_data = client.time_series('activities/steps', base_date=all_users_data[participant_id]['study_start_date'], end_date=all_users_data[participant_id]['study_end_date'])
                 for day in steps_data['activities-steps']:
                     date = datetime.strptime(day['dateTime'], '%Y-%m-%d')
                     if date > datetime.now():
@@ -350,21 +354,24 @@ class FitbitAuthSimple:
                     else:
                         steps = int(day['value'])
                     all_data.append({
-                        'user_id': user_id,
+                        'user_id': participant_id,
                         'wave_number': user_data['wave_number'],
                         'date': day['dateTime'],
                         'steps': steps
                     })
                     # Debug print
-                    print(f"User: {user_id}, Date: {day['dateTime']}, Steps: {day['value']}")
+                    print(f"User: {participant_id}, Date: {day['dateTime']}, Steps: {day['value']}")
             except Exception as e:
-                print(f"Error retrieving data for user {user_id}: {e}")
+                print(f"Error retrieving data for user {participant_id}: {e}")
+
+        # Get current date and time for the filename
+        current_time = datetime.now().strftime("%Y%m%d_%H%M")
 
         # Create DataFrame
         if all_data:
             df = pd.DataFrame(all_data)
             df['steps'] = df['steps'].astype(float)
-            output_file = f'steps_data_study_period.csv'
+            output_file = f'steps_data_study_period_{current_time}.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
             return df
@@ -378,27 +385,35 @@ class FitbitAuthSimple:
         Returns:
             pd.DataFrame: A DataFrame containing sleep data for all users according to the study period
         """
-        # Read JSON file
-        with open(self.info_file, 'r') as file:
-            all_users_data = json.load(file)
+        # Read dynamoDB table
+        Session = boto3.Session(
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.region_name
+        )
+
+        dynamodb = Session.resource("dynamodb")
+        table = dynamodb.Table(self.aws_table_name)
+
+        response = table.scan()
+        all_users_data = {item['participant_id']: item for item in response.get('Items', [])}
 
         # Lists to store data
         all_data = []
 
         # Loop through each user
-        for user_id, user_data in all_users_data.items():
-            print(f"Processing user: {user_id}")
-            tokens = self._load_all_tokens().get(user_id)
-            if not tokens:
-                print(f"No tokens found for user {user_id}")
+        for participant_id, user_data in all_users_data.items():
+            print(f"Processing user: {participant_id}")
+            if not user_data:
+                print(f"No tokens found for user {participant_id}")
                 continue
 
             client = fitbit.Fitbit(
                 self.client_id,
                 self.client_secret,
-                access_token=tokens['access_token'],
-                refresh_token=tokens['refresh_token'],
-                refresh_cb=lambda token: self._save_tokens(user_id, token),
+                access_token=user_data['access_token'],
+                refresh_token=user_data['refresh_token'],
+                refresh_cb=lambda token: self._save_tokens(participant_id, token),
                 oauth2=True
             )
 
@@ -422,7 +437,7 @@ class FitbitAuthSimple:
                         logType = day.get('logType', None)
                         startTime = day.get('startTime', None)
                     all_data.append({
-                        'user_id': user_id,
+                        'user_id': participant_id,
                         'wave_number': user_data['wave_number'],
                         'date': day['dateOfSleep'],
                         'duration (ms)': duration,
@@ -432,10 +447,10 @@ class FitbitAuthSimple:
                         'start_time': startTime
                     })
                     # Debug print
-                    print(f"User: {user_id}, Date: {day['dateOfSleep']}, Duration: {duration}, Efficiency: {efficiency}, isMainSleep: {is_main_sleep}, logType: {logType}, startTime: {startTime}")
+                    print(f"User: {participant_id}, Date: {day['dateOfSleep']}, Duration: {duration}, Efficiency: {efficiency}, isMainSleep: {is_main_sleep}, logType: {logType}, startTime: {startTime}")
             except Exception as e:
-                print(f"Error retrieving data for user {user_id}: {e}")
-
+                print(f"Error retrieving data for user {participant_id}: {e}")
+        
         # Create DataFrame
         if all_data:
             df = pd.DataFrame(all_data)
@@ -443,7 +458,8 @@ class FitbitAuthSimple:
             # Convert duration from ms to mins
             df['duration (mins)'] = df['duration (ms)'] / 60000
             df['efficiency'] = df['efficiency'].astype(float)
-            output_file = f'sleep_data_study_period.csv'
+            current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_file = f'sleep_data_study_period_{current_time}.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
             return df
@@ -547,10 +563,9 @@ def check_env_variables() -> tuple[bool, str]:
 
     Returns:
         tuple[bool, str]: A tuple containing a boolean indicating if all variables are set,
-                          and a string with the names of any missing variables
+                        and a string with the names of any missing variables
     """
     current_dir = os.getcwd()
-    env_file_path = os.path.join(current_dir, '.env')
     
     # Read the .env file firectly to check for variables
     env_vars = {}
@@ -568,8 +583,6 @@ def check_env_variables() -> tuple[bool, str]:
         'FITBIT_CLIENT_ID',
         'FITBIT_CLIENT_SECRET',
         'FITBIT_CALLBACK_URL',
-        'TOKENS_PATH',
-        'INFO_PATH',
         'AWS_ACCESS_KEY_ID',
         'AWS_SECRET_ACCESS_KEY',
         'AWS_REGION',
@@ -588,8 +601,6 @@ def check_env_variables() -> tuple[bool, str]:
 
 def create_env_file(fitbit_client_id: str,
                     fitbit_client_secret: str,
-                    tokens_path: str,
-                    info_path: str,
                     aws_access_key_id: str,
                     aws_secret_access_key: str):
     """Create a .env file with the provided environment variables
@@ -597,8 +608,6 @@ def create_env_file(fitbit_client_id: str,
     Args:
         fitbit_client_id (str): Fitbit client ID
         fitbit_client_secret (str): Fitbit client secret
-        tokens_path (str): Path to the tokens JSON file
-        info_path (str): Path to the user info JSON file
         aws_access_key_id (str): AWS access key ID
         aws_secret_access_key (str): AWS secret access key
         
@@ -609,8 +618,6 @@ def create_env_file(fitbit_client_id: str,
         f.write(f"FITBIT_CLIENT_ID={fitbit_client_id}\n")
         f.write(f"FITBIT_CLIENT_SECRET={fitbit_client_secret}\n")
         f.write(f"FITBIT_CALLBACK_URL=https://drarigo.wordpress.com\n")
-        f.write(f"TOKENS_PATH={tokens_path}\n")
-        f.write(f"INFO_PATH={info_path}\n")
         f.write(f"AWS_ACCESS_KEY_ID={aws_access_key_id}\n")
         f.write(f"AWS_SECRET_ACCESS_KEY={aws_secret_access_key}\n")
         f.write(f"AWS_REGION=us-east-1\n")
@@ -634,16 +641,12 @@ def update_env_file():
         case "2":
             env_var_name = "FITBIT_CLIENT_SECRET"
         case "3":
-            env_var_name = "TOKENS_PATH"
-        case "4":
-            env_var_name = "INFO_PATH"
-        case "5":
             env_var_name = "AWS_ACCESS_KEY_ID"
-        case "6":
+        case "4":
             env_var_name = "AWS_SECRET_ACCESS_KEY"
-        case "7":
+        case "5":
             env_var_name = "AWS_REGION"
-        case "8":
+        case "6":
             env_var_name = "AWS_TABLE_NAME"
         case _:
             print("Invalid choice")
@@ -714,16 +717,25 @@ def edit_user_study_info():
         None
     '''
     
-    user_id = input("Enter the participant ID you want to edit: ")
-    
+    participant_id = input("Enter the participant ID you want to edit: ")
+
     # Print current study information for the user
-    paf = FitbitAuthSimple()
-    all_info = paf._load_all_info()
-    if user_id in all_info:
-        print(f"Current study information for user {user_id}:")
-        print(json.dumps(all_info[user_id], indent=4))
+    Session = boto3.Session(
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+        region_name=os.getenv('AWS_REGION')
+    )
+    dynamodb = Session.resource("dynamodb")
+    table = dynamodb.Table(os.getenv('AWS_TABLE_NAME'))
+    
+    # Get the user's study information from the DynamoDB table
+    response = table.get_item(Key={'participant_id': participant_id})
+    all_info = response.get('Item', {})
+    
+    if participant_id in all_info:
+        print(f"Current study information for user {participant_id}:")
     else:
-        print(f"No user found with ID {user_id}. Please check the participant ID and try again.")
+        print(f"No user found with ID {participant_id}. Please check the participant ID and try again.")
         return
     
     print("Which study information variable would you like to edit?")
@@ -747,36 +759,13 @@ def edit_user_study_info():
             return
         
     new_value = input(f"Enter the new value for {study_info}: ")
-
-    # Load existing info
-    all_info = paf._load_all_info()
-    if user_id in all_info:
-        all_info[user_id][study_info] = new_value
-        # Save updated info
-        with open(paf.info_file, 'w') as f:
-            json.dump(all_info, f)
-        print(f"Updated {study_info} for user {user_id} to {new_value}.")
-    else:
-        print(f"No user found with ID {user_id}. Please check the participant ID and try again.")
-    
-    #TODO: Add the option to update the user in AWS DynamoDB as well
-    
-    # Update user in AWS DynamoDB
-    Session = boto3.Session(
-        aws_access_key_id=paf.aws_access_key_id,
-        aws_secret_access_key=paf.aws_secret_access_key,
-        region_name=paf.region_name
-    )
-    
-    dynamodb = Session.resource("dynamodb")
-    table = dynamodb.Table(paf.aws_table_name)
     
     try:
         table.update_item(
-            Key={'participant_id': user_id},
+            Key={'participant_id': participant_id},
             UpdateExpression=f"SET {study_info} = :val",
             ExpressionAttributeValues={':val': new_value}
         )
-        print(f"Updated {study_info} for user {user_id} in AWS DynamoDB to {new_value}.")
+        print(f"Updated {study_info} for user {participant_id} in AWS DynamoDB to {new_value}.")
     except Exception as e:
-        print(f"Error updating user {user_id} in AWS DynamoDB: {e}")
+        print(f"Error updating user {participant_id} in AWS DynamoDB: {e}")

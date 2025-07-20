@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qs
 import project_pace_api_functions as paf
 import time
-# %% 
+# %%
 if __name__ == "__main__":
     auth = paf.FitbitAuthSimple()
 
@@ -66,21 +66,21 @@ if __name__ == "__main__":
     
     match option:
         case "1": # Generate link for participant to authorize
-            user_id = input("Enter the user_id: ")
+            participant_id = input("Enter the participant_id: ")
             auth_link = auth.get_auth_link()
-            print(f"\nGive this link to participant {user_id}:")
+            print(f"\nGive this link to participant {participant_id}:")
             print(auth_link)
             link_code = input("\nInput URL that the participant received: ")
             parsed_url = urlparse(link_code)
             code = parse_qs(parsed_url.query)['code'][0]
-            auth.save_token_from_code(user_id, code)
+            auth.save_token_from_code(participant_id, code)
         case "2": # Get steps for a user up to a certain amount of days back
-            user_id = input("Enter the user_id: ")
+            participant_id = input("Enter the participant_id: ")
             days = int(input("Enter the number of days you want to look back: "))
             from datetime import datetime, timedelta
             today = datetime.now().strftime('%Y-%m-%d')
             time_ago = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-            steps_data = auth.get_user_steps(user_id, time_ago, today)
+            steps_data = auth.get_user_steps(participant_id, time_ago, today)
 
             # Convert to DataFrame
             if steps_data and 'activities-steps' in steps_data:
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         case "3": # Extract all users data to a CSV file from a certain date to a certain date
                 start_date = input("Enter start date (YYYY-MM-DD): ")
                 end_date = input("Enter end date (YYYY-MM-DD): ")
-                result_df = auth.extract_all_users_steps('user_tokens.json', start_date, end_date)
+                result_df = auth.extract_all_users_steps_over_date_range(start_date, end_date)
                 if result_df is not None:
                     print("\nExtracted Data:")
                     print(result_df)
