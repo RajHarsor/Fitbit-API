@@ -35,7 +35,7 @@ if __name__ == "__main__":
         exit(1)
     else:
         print("Found .env file. Checking environment variables...")
-        req_env_vars = paf.check_env_variables()
+        req_env_vars = auth.check_env_variables()
         if req_env_vars[0] == False: # If the required vars[0] is False, it means some variables are missing
             print(f"Missing environment variables: {req_env_vars[1]}")
 
