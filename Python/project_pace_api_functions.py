@@ -10,6 +10,13 @@ import logging
 # Initialize logging
 logging.basicConfig(filename='project_pace_api.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+load_dotenv()
+client_id = os.getenv('FITBIT_CLIENT_ID')
+client_secret = os.getenv('FITBIT_CLIENT_SECRET')
+aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
+aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+aws_region_name = "us-east-1"
+
 # %%
 class FitbitAuthSimple:
     def __init__(self):
@@ -792,14 +799,14 @@ def edit_user_study_info():
     Returns:
         None
     '''
-    
     participant_id = input("Enter the participant ID you want to edit: ")
-
+    logging.info(f"Editing study information for user {participant_id}")
+    
     # Print current study information for the user
     Session = boto3.Session(
-        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-        region_name=os.getenv('AWS_REGION')
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        region_name=aws_region_name
     )
     dynamodb = Session.resource("dynamodb")
     table = dynamodb.Table(os.getenv('AWS_TABLE_NAME'))
