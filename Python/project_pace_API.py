@@ -17,7 +17,7 @@ if __name__ == "__main__":
     # Check if .env file exists
     print("Checking if .env file exists...")
     
-    env_var_file = paf.check_env_file_exists()
+    env_var_file = auth.check_env_file_exists()
     if not env_var_file: # If .env file does not exist, prompt user to create one
         print("No .env file found. Please create a .env file with your Fitbit API credentials.")
         print("Please setup the environment variables in the .env file as follows:")
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         fitbit_client_secret = input("FITBIT_CLIENT_SECRET: ")
         aws_access_key_id = input("AWS_ACCESS_KEY_ID: ")
         aws_secret_access_key = input("AWS_SECRET_ACCESS_KEY: ")
-        paf.create_env_file(fitbit_client_id,
+        auth.create_env_file(fitbit_client_id,
                             fitbit_client_secret,
                             aws_access_key_id=aws_access_key_id,
                             aws_secret_access_key=aws_secret_access_key)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
                 print("\nExtracted Data:")
                 print(result_df)
         case "5": # Edit a user's information
-            paf.edit_user_study_info()
+            auth.edit_user_study_info()
         case "6": # Delete user
             user_id = input("Enter the user_id you want to delete: ")
             auth.delete_user(user_id)
@@ -112,9 +112,9 @@ if __name__ == "__main__":
                 print("\nExtracted Data:")
                 print(result_df)
         case "9": # Send test text messages to a user
-            paf.send_test_message()
+            auth.send_test_message()
         case "10": # Update env file
-            paf.update_env_file()
+            auth.update_env_file()
         case "11": # Exit the program
             print("Exiting the program.")
             exit(1)

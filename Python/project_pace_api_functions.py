@@ -753,7 +753,7 @@ class FitbitAuthSimple:
         Session = boto3.Session(
             aws_access_key_id=self.aws_access_key_id,
             aws_secret_access_key=self.aws_secret_access_key,
-            region_name=self.aws_region_name
+            region_name=self.region_name
         )
         
         dynamodb = Session.resource("dynamodb")
@@ -798,7 +798,7 @@ class FitbitAuthSimple:
         Session = boto3.Session(
             aws_access_key_id=self.aws_access_key_id,
             aws_secret_access_key=self.aws_secret_access_key,
-            region_name=self.aws_region_name
+            region_name=self.region_name
         )
         dynamodb = Session.resource("dynamodb")
         table = dynamodb.Table(os.getenv('AWS_TABLE_NAME'))
