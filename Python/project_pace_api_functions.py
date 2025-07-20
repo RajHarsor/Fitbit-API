@@ -142,7 +142,10 @@ class FitbitAuthSimple:
         # Update the item in DynamoDB
         table.update_item(
             Key={'participant_id': participant_id},
-            UpdateExpression="SET access_token = :access_token, refresh_token = :refresh_token, expires_in = :expires_in, expires_at = :expires_at, scope = :scope, token_type = :token_type, user_id = :user_id",
+            UpdateExpression="SET access_token = :access_token, refresh_token = :refresh_token, expires_in = :expires_in, expires_at = :expires_at, #scope_attr = :scope, token_type = :token_type, user_id = :user_id",
+            ExpressionAttributeNames={
+                '#scope_attr': 'scope'
+            },
             ExpressionAttributeValues={
                 ':access_token': tokens['access_token'],
                 ':refresh_token': tokens['refresh_token'],
