@@ -8,7 +8,7 @@ import boto3
 import logging
 
 # Initialize logging
-logging.basicConfig(filename='project_pace_api.log', format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='project_pace_api.log', format='%(asctime)s - %(levelname)s - %(message)s', level = logging.INFO)
 
 
 # %%
