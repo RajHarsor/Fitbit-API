@@ -6,6 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import boto3
 import logging
+from decimal import Decimal
 
 # Initialize logging
 logging.basicConfig(filename='project_pace_api.log', format='%(asctime)s - %(levelname)s - %(message)s', level = logging.INFO)
@@ -73,8 +74,8 @@ class FitbitAuthSimple:
         # Unravel the tokens so the information can be saved to AWS dynamoDB
         access_token = tokens['access_token']
         refresh_token = tokens['refresh_token']
-        expires_in = int(tokens['expires_in'])
-        expires_at = int(tokens['expires_at'])
+        expires_in = Decimal(tokens['expires_in'])
+        expires_at = Decimal(tokens['expires_at'])
         scope = tokens['scope']
         token_type = tokens['token_type']
         token_user_id = tokens['user_id']
