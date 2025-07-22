@@ -548,15 +548,18 @@ class FitbitAuthSimple:
                 print(f"No tokens found for user {user_id}")
                 logging.error(f"No tokens found for user {user_id}")
                 continue
-
+        try:
             client = fitbit.Fitbit(
                 self.client_id,
                 self.client_secret,
                 access_token=access_tokens['access_token'],
                 refresh_token=refresh_tokens['refresh_token'],
-                refresh_cb=lambda token: self._save_tokens(user_id, token),
+                refresh_cb=lambda token: self._save_tokens_to_dynamodb(user_id, token),
                 oauth2=True
             )
+        except Exception as e:
+            print(f"Error creating Fitbit client for user {user_id}: {e}")
+            logging.error(f"Error creating Fitbit client for user {user_id}: {e}")
 
             try:
                 """Get activity list for a user between dates"""
