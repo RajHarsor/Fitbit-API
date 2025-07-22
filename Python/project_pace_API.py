@@ -95,7 +95,7 @@ if __name__ == "__main__":
             # Tested - works
             auth.edit_user_study_info()
         case "5": # Delete user
-            # TODO: Test this function
+            # Tested - works
             user_id = input("Enter the user_id you want to delete: ")
             auth.delete_user(user_id)
         case "6": # Get sleep data
