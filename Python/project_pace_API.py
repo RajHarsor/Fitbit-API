@@ -105,7 +105,7 @@ if __name__ == "__main__":
                 print("\nExtracted Data:")
                 print(result_df)
         case "7": # Get activity data
-            # TODO: Test this function
+            # Tested - works
             result_df = auth.extract_all_users_activity_study_period()
             if result_df is not None:
                 print("\nExtracted Data:")
