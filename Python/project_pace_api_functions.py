@@ -72,13 +72,13 @@ class FitbitAuthSimple:
         #self._save_tokens(user_id, tokens) # Only using this when saving the tokens to a file
         
         # Unravel the tokens so the information can be saved to AWS dynamoDB
-        access_token = tokens['access_token']
-        refresh_token = tokens['refresh_token']
+        access_token = str(tokens['access_token'])
+        refresh_token = str(tokens['refresh_token'])
         expires_in = Decimal(str(tokens['expires_in']))
         expires_at = Decimal(str(tokens['expires_at']))
         scope = tokens['scope']
-        token_type = tokens['token_type']
-        token_user_id = tokens['user_id']
+        token_type = str(tokens['token_type'])
+        token_user_id = str(tokens['user_id'])
 
         # Prompt for additional information
         wave_number = input("Enter wave number: ")
