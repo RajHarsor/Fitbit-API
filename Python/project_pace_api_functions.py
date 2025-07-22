@@ -74,8 +74,8 @@ class FitbitAuthSimple:
         # Unravel the tokens so the information can be saved to AWS dynamoDB
         access_token = tokens['access_token']
         refresh_token = tokens['refresh_token']
-        expires_in = Decimal(tokens['expires_in'])
-        expires_at = Decimal(tokens['expires_at'])
+        expires_in = Decimal(str(tokens['expires_in']))
+        expires_at = Decimal(str(tokens['expires_at']))
         scope = tokens['scope']
         token_type = tokens['token_type']
         token_user_id = tokens['user_id']
