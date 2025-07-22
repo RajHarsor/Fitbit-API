@@ -540,37 +540,35 @@ class FitbitAuthSimple:
         dynamodb = Session.resource("dynamodb")
         table = dynamodb.Table(self.aws_table_name)
         response = table.scan()
-        all_users_data = {item['user_id']: item for item in response['Items']}
+        all_users_data = {item['participant_id']: item for item in response['Items']}
         logging.info(f"Retrieved all users data from DynamoDB: {all_users_data}")
 
         # Lists to store data
         all_data = []
 
         # Loop through each user
-        for user_id, user_data in all_users_data.items():
-            print(f"Processing user: {user_id}")
+        for participant_id, user_data in all_users_data.items():
+            print(f"Processing user: {participant_id}")
             # Get tokens for the user through the scan
-            access_tokens = all_users_data[user_id].get('access_tokens')
-            refresh_tokens = all_users_data[user_id].get('refresh_tokens')
-            logging.info(f"Retrieved tokens for user {user_id}: {access_tokens}, {refresh_tokens}")
-            if not access_tokens:
-                print(f"No tokens found for user {user_id}")
-                logging.error(f"No tokens found for user {user_id}")
+            access_token = user_data.get('access_token')
+            refresh_token = user_data.get('refresh_token')
+            logging.info(f"Retrieved tokens for user {participant_id}: {access_token}, {refresh_token}")
+            
+            if not access_token or not refresh_token:
+                print(f"No tokens found for user {participant_id}")
+                logging.error(f"No tokens found for user {participant_id}")
                 continue
-        try:
-            client = fitbit.Fitbit(
-                self.client_id,
-                self.client_secret,
-                access_token=access_tokens['access_token'],
-                refresh_token=refresh_tokens['refresh_token'],
-                refresh_cb=lambda token: self._save_tokens_to_dynamodb(user_id, token),
-                oauth2=True
-            )
-        except Exception as e:
-            print(f"Error creating Fitbit client for user {user_id}: {e}")
-            logging.error(f"Error creating Fitbit client for user {user_id}: {e}")
 
             try:
+                client = fitbit.Fitbit(
+                    self.client_id,
+                    self.client_secret,
+                    access_token=access_token,
+                    refresh_token=refresh_token,
+                    refresh_cb=lambda token: self._save_tokens_to_dynamodb(participant_id, token),
+                    oauth2=True
+                )
+
                 """Get activity list for a user between dates"""
                 #Get activity data:
                 activity_data = client.activity_PACE_loglist(afterDate=user_data['study_start_date'])
@@ -579,7 +577,8 @@ class FitbitAuthSimple:
                 rows = []
                 for activities in activity_data["activities"]:
                     row = {
-                        'user_id': user_id,
+                        'user_id': participant_id,
+                        'wave_number': user_data['wave_number'],
                         'date': activities['startTime'].split('T')[0],
                         'activityName': activities['activityName'],
                         'activityTypeId': activities['activityTypeId'],
@@ -590,7 +589,6 @@ class FitbitAuthSimple:
                         'logType': activities['logType'],
                         'manualValuesSpecified_steps': activities['manualValuesSpecified']['steps'],
                         'startTime': activities['startTime'],
-                        'originalDuration': activities['originalDuration'],
                         'lastModified': activities['lastModified']
                     }
                     # Add activity levels as separate columns
@@ -599,8 +597,8 @@ class FitbitAuthSimple:
                     rows.append(row)
                 all_data.extend(rows)
             except Exception as e:
-                print(f"Error retrieving data for user {user_id}: {e}")
-                logging.error(f"Error retrieving data for user {user_id}: {e}")
+                print(f"Error retrieving data for user {participant_id}: {e}")
+                logging.error(f"Error retrieving data for user {participant_id}: {e}")
             
         # Create DataFrame
         if all_data:
@@ -613,12 +611,11 @@ class FitbitAuthSimple:
                 if date < datetime.strptime(user_data['study_start_date'], '%Y-%m-%d') or date > datetime.strptime(user_data['study_end_date'], '%Y-%m-%d'):
                     df.drop(index, inplace=True)
 
-            output_file = f'activity_data_study_period.csv'
+            current_time = datetime.now().strftime("%Y%m%d_%H%M")
+            output_file = f'activity_data_study_period_{current_time}.csv'
             df.to_csv(output_file, index=False)
             print(f"Data exported to {output_file}")
             logging.info(f"Data exported to {output_file}")
-            logging.info(f"All activity data: {all_data}")
-            logging.info(f"Dataframe: {df}")
             return df
         else:
             print("No data found for the specified date range")
