@@ -86,7 +86,6 @@ if __name__ == "__main__":
             else:
                 print("No data available")
         case "3": # Extract all users data to a CSV file from a certain date to a certain date
-                # TODO: Test this function
                 start_date = input("Enter start date (YYYY-MM-DD): ")
                 end_date = input("Enter end date (YYYY-MM-DD): ")
                 result_df = auth.extract_all_users_steps_over_date_range(start_date, end_date)
@@ -107,7 +106,7 @@ if __name__ == "__main__":
             user_id = input("Enter the user_id you want to delete: ")
             auth.delete_user(user_id)
         case "7": # Get sleep data
-            # TODO: Test this function
+            # Tested - works
             result_df = auth.extract_all_users_sleepData_study_period()
             if result_df is not None:
                 print("\nExtracted Data:")
