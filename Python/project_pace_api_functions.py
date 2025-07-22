@@ -74,10 +74,19 @@ class FitbitAuthSimple:
         access_token = tokens['access_token']
         refresh_token = tokens['refresh_token']
         expires_in = tokens['expires_in']
-        expires_at = tokens['expires_at']
+        expires_at = Decimal(str(tokens['expires_at'])) # this is a float
         scope = tokens['scope']
         token_type = tokens['token_type']
         token_user_id = tokens['user_id']
+        
+        # print types
+        logging.info(f"Access Token Type: {type(access_token)}")
+        logging.info(f"Refresh Token Type: {type(refresh_token)}")
+        logging.info(f"Expires In Type: {type(expires_in)}")
+        logging.info(f"Expires At Type: {type(expires_at)}")
+        logging.info(f"Scope Type: {type(scope)}")
+        logging.info(f"Token Type Type: {type(token_type)}")
+        logging.info(f"User ID Type: {type(token_user_id)}")
 
         # Prompt for additional information
         wave_number = input("Enter wave number: ")
