@@ -456,7 +456,7 @@ class FitbitAuthSimple:
                 self.client_secret,
                 access_token=user_data['access_token'],
                 refresh_token=user_data['refresh_token'],
-                refresh_cb=lambda token: self._save_tokens(participant_id, token),
+                refresh_cb=lambda token: self._save_tokens_to_dynamodb(participant_id, token),
                 oauth2=True
             )
 
