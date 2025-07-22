@@ -451,14 +451,19 @@ class FitbitAuthSimple:
                 logging.error(f"No tokens found for user {participant_id}")
                 continue
 
-            client = fitbit.Fitbit(
-                self.client_id,
-                self.client_secret,
-                access_token=user_data['access_token'],
-                refresh_token=user_data['refresh_token'],
+            try:
+                client = fitbit.Fitbit(
+                    self.client_id,
+                    self.client_secret,
+                    access_token=user_data['access_token'],
+                    refresh_token=user_data['refresh_token'],
                 refresh_cb=lambda token: self._save_tokens_to_dynamodb(participant_id, token),
                 oauth2=True
             )
+            except Exception as e:
+                print(f"Error creating Fitbit client for user {participant_id}: {e}")
+                logging.error(f"Error creating Fitbit client for user {participant_id}: {e}")
+                continue
 
             try:
                 sleep_data = client.time_series('sleep', base_date=user_data['study_start_date'], end_date=user_data['study_end_date'])
