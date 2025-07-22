@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     """ Options for user interaction """
     time.sleep(2)
-    print("What step would you like to do? \n1. Generate link for participant & save token \n2. Get single user steps for a certain range \n3. Extract all users data to a CSV file from a date range \n4. Extract all users data according to the study period \n5. Edit a user's information \n6. Delete a user \n7. Get sleep data over the study period\n8. Get activity data over the study period\n9. Send test message\n10. Update environment variable\n11. Exit")
+    print("What step would you like to do? \n1. Generate link for participant & save token \n2. Get single user steps for a certain range \n3. Extract all users step data according to the study period \n4. Edit a user's information \n5. Delete a user \n6. Get sleep data over the study period\n7. Get activity data over the study period\n8. Send test message\n9. Update environment variable\n10. Exit")
 
     option = input("Enter the number of the option you want to execute: ")
     
@@ -85,44 +85,37 @@ if __name__ == "__main__":
                 print(df)
             else:
                 print("No data available")
-        case "3": # Extract all users data to a CSV file from a certain date to a certain date
-                start_date = input("Enter start date (YYYY-MM-DD): ")
-                end_date = input("Enter end date (YYYY-MM-DD): ")
-                result_df = auth.extract_all_users_steps_over_date_range(start_date, end_date)
-                if result_df is not None:
-                    print("\nExtracted Data:")
-                    print(result_df)
-        case "4": # Extract all users data according to the study period
+        case "3": # Extract all users data according to the study period
             # Tested - works
             result_df = auth.extract_all_users_steps_study_period()
             if result_df is not None:
                 print("\nExtracted Data:")
                 print(result_df)
-        case "5": # Edit a user's information
+        case "4": # Edit a user's information
             # Tested - works
             auth.edit_user_study_info()
-        case "6": # Delete user
+        case "5": # Delete user
             # TODO: Test this function
             user_id = input("Enter the user_id you want to delete: ")
             auth.delete_user(user_id)
-        case "7": # Get sleep data
+        case "6": # Get sleep data
             # Tested - works
             result_df = auth.extract_all_users_sleepData_study_period()
             if result_df is not None:
                 print("\nExtracted Data:")
                 print(result_df)
-        case "8": # Get activity data
+        case "7": # Get activity data
             # TODO: Test this function
             result_df = auth.extract_all_users_activity_study_period()
             if result_df is not None:
                 print("\nExtracted Data:")
                 print(result_df)
-        case "9": # Send test text messages to a user
+        case "8": # Send test text messages to a user
             # Tested - works
             auth.send_test_message()
-        case "10": # Update env file
+        case "9": # Update env file
             auth.update_env_file()
-        case "11": # Exit the program
+        case "10": # Exit the program
             # Tested - works
             print("Exiting the program.")
             exit(1)
