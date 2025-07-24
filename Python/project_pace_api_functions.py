@@ -159,7 +159,7 @@ class FitbitAuthSimple:
                 ':access_token': tokens['access_token'],
                 ':refresh_token': tokens['refresh_token'],
                 ':expires_in': tokens['expires_in'],
-                ':expires_at': tokens['expires_at'],
+                ':expires_at': Decimal(str(tokens['expires_at'])),
                 ':scope': tokens['scope'],
                 ':token_type': tokens['token_type'],
                 ':user_id': tokens['user_id']
