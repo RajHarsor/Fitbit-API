@@ -1,3 +1,0 @@
-user_id,wave_number,date,activityName,activityTypeId,duration (ms),duration (mins),originalDuration (ms),originalDuration (mins),logType,manualValuesSpecified_steps,startTime,lastModified,sedentary,lightly,fairly,very
-raj_test1,0,2025-07-22,Swim,90024,1800000,30.0,1800000,30.0,manual,False,2025-07-22T14:13:00.000-04:00,2025-07-22T18:43:20.555Z,29,1,0,0
-raj_test,0,2025-07-22,Swim,90024,1800000,30.0,1800000,30.0,manual,False,2025-07-22T14:13:00.000-04:00,2025-07-22T18:43:20.555Z,29,1,0,0
