@@ -629,6 +629,7 @@ class FitbitAuthSimple:
         Returns:
             bool: True if the .env file exists, False otherwise
         """
+        logging.info("Version 2.1.3 (2025-07-24)")
         logging.info("check_env_file_exists called to check if .env file exists")
         load_dotenv()
         return os.path.exists('.env')
