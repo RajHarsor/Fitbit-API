@@ -184,7 +184,7 @@ class FitbitAuthSimple:
         )
         dynamodb = Session.resource("dynamodb")
         table = dynamodb.Table(self.aws_table_name)
-        
+
         try:
             table.delete_item(Key={'participant_id': participant_id})
             print(f"Deleted participant {participant_id} from AWS DynamoDB.")
